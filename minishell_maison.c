@@ -14,6 +14,8 @@
     TYPE 3 = SIMPLE QUOTE
     TYPE 4 = EXTENSION
     TYPE 5 = PIPE
+    TYPE 6 = INFILE
+    TYPE 7 = OUTFILE
 */
 
 
@@ -143,9 +145,9 @@ int parse_line (char *str, list **token, value **extension, int i)
     char                *result; 
     int                 a;
     int                 b;
-    int                 is_extension;
+    int                 utils;
 
-    is_extension = 0;
+    utils = 0;
     while (str[i])
     {   
         if (str[i] == 34)                                       // " "
@@ -235,6 +237,40 @@ int parse_line (char *str, list **token, value **extension, int i)
             parse_line (str, token, extension, i);
             return (0);
         }
+
+        if (str[i] == '<' || str[i] == '>')
+        {
+            utils = 6;
+            if (str[i] == '>')
+                utils = 7;
+            i++;
+            while (str[i] && str[i] == ' ')
+                i++;
+            b = 0;
+            a = i;
+            while (str[i] && str[i] != ' ')
+                i++;
+            result = malloc(sizeof(char *) * (i - a + 1));
+            if (!result)
+                perror("MALLOC RESULT PARSING");
+            while (a < i)
+            {
+                result[b] = str[a];
+                b++;
+                a++;
+            }
+            result[b] = '\0';
+            *token = create_list(*token, check_extension(result, *extension), utils);         
+            while (str[i] && str[i] == ' ')
+                i++;
+            parse_line (str, token, extension, i);
+            return (0);
+        
+        }
+
+
+
+
         if (str[i])
         {
             b = 0;
@@ -242,7 +278,7 @@ int parse_line (char *str, list **token, value **extension, int i)
             while (str[i] && str[i] != ' ')
             {
                 if (str[i] == '=')
-                    is_extension = 1;
+                    utils = 1;
                 i++;
             }
 
@@ -269,14 +305,14 @@ int parse_line (char *str, list **token, value **extension, int i)
                 a++;
             }
             result[b] = '\0';
-            if (is_extension == 0)
+            if (utils == 0)
             {
                 *token = create_list(*token, result, 1);
             }
-            if (is_extension == 1)
+            if (utils == 1)
             {
                 *extension = set_extension(result, *extension);
-                is_extension = 0;
+                utils = 0;
             }
             while (str[i] && str[i] == ' ')
                 i++;
@@ -304,6 +340,7 @@ int main ()
         while (token)
         {
             printf("token = %s\ntype = %d\n\n", token->str, token->type);
+            //check_grammar(token);  PAS ENCORE FAIT ;
             token = token->previous;
         }
         free_list(token);
@@ -315,5 +352,5 @@ int main ()
 
 /*A FAIRE DEMAIN => // HERE_DOC
                => // integrer integration dans integration a=test -> b=ert$a --->>> A FAIRE
-               => // integrer integration dans double quote
+
                => faire attention aux tokens; */
