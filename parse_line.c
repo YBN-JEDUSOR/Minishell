@@ -1,0 +1,175 @@
+#include "minishell.h"
+
+
+int parse_line (char *str, list **token, value **extension, int i, db_list **info)
+{
+    char                *result; 
+    int                 a;
+    int                 b;
+    int                 utils;
+
+    utils = 0;
+    while (str[i])
+    {   
+        if (str[i] == 34)                                       // " "
+        {
+            b = 0;
+            i++;
+            a = i;
+            while (str[i] && str[i] != 34)
+                i++;
+            result = malloc(sizeof(char *) * (i - a + 1));
+            if (!result)
+                perror("MALLOC RESULT PARSING");
+            while (a < i)
+            {
+                result[b] = str[a];
+                b++;
+                a++;
+            }
+            result[b] = '\0';
+            i++;
+            *token = push_list(*info, *token, result, 3);
+            while (str[i] && str[i] == ' ')
+                i++;
+            parse_line (str, token, extension, i, info);
+            return (0);
+        }
+        if (str[i] == 39)                                        // ' '
+        {
+            b = 0;
+            i++;
+            a = i;
+            while (str[i] && str[i] != 39)
+                i++;
+            result = malloc(sizeof(char *) * (i - a + 1));
+            if (!result)
+                perror("MALLOC RESULT PARSING");
+            while (a < i)
+            {
+                result[b] = str[a];
+                b++;
+                a++;
+            }
+            result[b] = '\0';
+            i++;
+            *token = push_list(*info, *token, result, 4);;
+            while (str[i] && str[i] == ' ')
+                i++;
+            parse_line (str, token, extension, i, info);
+            return (0);   
+        }
+        if (str[i] == '|')
+        {
+            b = 0;
+            result = malloc(sizeof(char *) * (2));
+            if (!result)
+                perror("MALLOC RESULT PARSING");
+            result[0] = str[i];
+            result[1] = '\0';
+            i++;
+            *token = push_list(*info, *token, result, 5);;
+            while (str[i] && str[i] == ' ')
+                i++;
+            parse_line (str, token, extension, i, info);
+            return (0);   
+        }
+        if (str[i] == '$')
+        {
+            b = 0;
+            i++;
+            a = i;
+            
+            while (str[i] && str[i] != ' ' )
+                i++;
+            result = malloc(sizeof(char *) * (i - a + 1));
+            if (!result)
+                perror("MALLOC RESULT PARSING");
+            while (a < i)
+            {
+                result[b] = str[a];
+                b++;
+                a++;
+            }
+            result[b] = '\0';
+            *token = push_list(*info, *token, check_extension(result, *extension), 6);         
+            while (str[i] && str[i] == ' ')
+                i++;
+            parse_line (str, token, extension, i, info);
+            return (0);
+        }
+
+        if (str[i] == '<' || str[i] == '>')
+        {
+            utils = 7;
+            if (str[i] == '>')
+                utils = 8;
+            i++;
+            while (str[i] && str[i] == ' ')
+                i++;
+            b = 0;
+            a = i;
+            while (str[i] && str[i] != ' ')
+                i++;
+            result = malloc(sizeof(char *) * (i - a + 1));
+            if (!result)
+                perror("MALLOC RESULT PARSING");
+            while (a < i)
+            {
+                result[b] = str[a];
+                b++;
+                a++;
+            }
+            result[b] = '\0';
+            *token = push_list(*info, *token, check_extension(result, *extension), utils);         
+            while (str[i] && str[i] == ' ')
+                i++;
+            parse_line (str, token, extension, i, info);
+            return (0);
+        
+        }
+
+        if (str[i])
+        {
+            
+            b = 0;
+            a = i;
+
+            while (str[i] && str[i] != ' ')
+            {
+                if (str[i] == '=')
+                    utils = 1;
+                i++;
+            }
+
+            result = malloc(sizeof(char *) * (i - a + 1));
+            if (!result)
+                perror("MALLOC RESULT PARSING");
+            while (a < i)
+            {
+                if (str[a] == '"')                      //erreur si pas double quote qui referme,
+                    a++;
+                result[b] = str[a];
+                b++;
+                a++;
+            }
+            result[b] = '\0';
+            
+            if (utils == 0)
+            {
+                *token = push_list(*info, *token, result, 1);
+            }
+            if (utils == 1)
+            {
+                *extension = set_extension(result, *extension);
+                utils = 0;
+            }
+            while (str[i] && str[i] == ' ')
+                i++;
+            parse_line (str, token, extension, i, info);
+            return (0);
+        }
+    }
+    return (1);
+}
+

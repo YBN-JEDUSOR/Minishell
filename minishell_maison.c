@@ -10,12 +10,13 @@
 
 /* MAN MINISHELL 
     TYPE 1 = WORD
-    TYPE 2 = DOUBLE QUOTE
-    TYPE 3 = SIMPLE QUOTE
-    TYPE 4 = EXTENSION
-    TYPE 5 = PIPE
-    TYPE 6 = INFILE
-    TYPE 7 = OUTFILE
+    TYPE 2 = ARGUMENTS
+    TYPE 3 = DOUBLE QUOTE
+    TYPE 4 = SIMPLE QUOTE
+    TYPE 5 = EXTENSION
+    TYPE 6 = PIPE
+    TYPE 7 = INFILE
+    TYPE 8 = OUTFILE
 */
 
 
@@ -61,6 +62,32 @@ void free_list(list *token)
     }
 }
 
+int ft_grammar(list **token)
+{
+    if (*token);
+    {
+        if ((*token)->type == 1)
+        {
+            if ((*token)->type == 1 && (!(*token)->previous))
+                return (1);
+            
+            if ((*token)->type == 1 && (*token)->previous->type == 1)
+                (*token)->type = 2;
+
+            if ((*token)->type == 1 && (*token)->previous->type == 2)
+                (*token)->type = 2;
+        }
+        
+        if ((*token)->type == 5 && (!(*token)->previous))
+        {
+                printf("bash: syntax error near unexpected token `|'\n");
+                return (0);
+        }
+    }
+    return (1);
+}
+
+
 value *set_extension(char *str, value *extension)
 {
     int i;
@@ -99,10 +126,11 @@ value *set_extension(char *str, value *extension)
     a = 0;
     while (str[c])
     {
-    new_element->new[a] = str[c];  //integrer integration dans integration a=test -> b=ert$a --->>> A FAIRE
+        new_element->new[a] = str[c];  //integrer integration dans integration a=test -> b=ert$a --->>> A FAIRE
         c++;
         a++;
     }
+    str[c] = '\0';
     new_element->previous = extension;
     return (new_element);
 }
@@ -121,236 +149,99 @@ char *check_extension(char *str, value *extension)
     return (str);
 }
 
-list *create_list(list *token, char *str, int type)
-{   
-    static int  i;
+list *push_empty_list (db_list *info, list *token, char *str, int type)
+{
     list *new_element;
     new_element = malloc(sizeof(list));
     if (!new_element)
         perror ("MALLOC CREATE LIST");
     new_element->next = NULL;
-    new_element->previous = token;
+    new_element->previous = NULL;
     new_element->str = str;
     new_element->type = type;
-    if (i > 0)
-    {
-        token->next = new_element;
-        i++;
-    }
+    info->first = new_element;
+    info->last = new_element;
+    info->lenght = 1;
     return (new_element);
 }
 
-int parse_line (char *str, list **token, value **extension, int i)
+
+list *push_full_list (db_list *info, list *token, char *str, int type)
 {
-    char                *result; 
-    int                 a;
-    int                 b;
-    int                 utils;
+    list *new_element;
+    new_element = malloc(sizeof(list));
+    if (!new_element)
+        perror ("MALLOC CREATE LIST");
+    new_element->str = str;
+    new_element->type = type;
+    new_element->next = NULL;
+    info->last->next = new_element;
+    new_element->previous = info->last;
+    info->last = new_element;
+    info->lenght = info->lenght + 1;
 
-    utils = 0;
-    while (str[i])
-    {   
-        if (str[i] == 34)                                       // " "
-        {
-            b = 0;
-            i++;
-            a = i;
-            while (str[i] && str[i] != 34)
-                i++;
-            result = malloc(sizeof(char *) * (i - a + 1));
-            if (!result)
-                perror("MALLOC RESULT PARSING");
-            while (a < i)
-            {
-                result[b] = str[a];
-                b++;
-                a++;
-            }
-            result[b] = '\0';
-            i++;
-            *token = create_list(*token, result, 2);
-            while (str[i] && str[i] == ' ')
-                i++;
-            parse_line (str, token, extension, i);
-            return (0);
-        }
-        if (str[i] == 39)                                        // ' '
-        {
-            b = 0;
-            i++;
-            a = i;
-            while (str[i] && str[i] != 39)
-                i++;
-            result = malloc(sizeof(char *) * (i - a + 1));
-            if (!result)
-                perror("MALLOC RESULT PARSING");
-            while (a < i)
-            {
-                result[b] = str[a];
-                b++;
-                a++;
-            }
-            result[b] = '\0';
-            i++;
-            *token = create_list(*token, result, 3);
-            while (str[i] && str[i] == ' ')
-                i++;
-            parse_line (str, token, extension, i);
-            return (0);   
-        }
-        if (str[i] == '|')
-        {
-            b = 0;
-            result = malloc(sizeof(char *) * (2));
-            if (!result)
-                perror("MALLOC RESULT PARSING");
-            result[0] = str[i];
-            result[1] = '\0';
-            i++;
-            *token = create_list(*token, result, 4);
-            while (str[i] && str[i] == ' ')
-                i++;
-            parse_line (str, token, extension, i);
-            return (0);   
-        }
-        if (str[i] == '$')
-        {
-            b = 0;
-            i++;
-            a = i;
-            
-            while (str[i] && str[i] != ' ' )
-                i++;
-            result = malloc(sizeof(char *) * (i - a + 1));
-            if (!result)
-                perror("MALLOC RESULT PARSING");
-            while (a < i)
-            {
-                result[b] = str[a];
-                b++;
-                a++;
-            }
-            result[b] = '\0';
-            *token = create_list(*token, check_extension(result, *extension), 5);         
-            while (str[i] && str[i] == ' ')
-                i++;
-            parse_line (str, token, extension, i);
-            return (0);
-        }
-
-        if (str[i] == '<' || str[i] == '>')
-        {
-            utils = 6;
-            if (str[i] == '>')
-                utils = 7;
-            i++;
-            while (str[i] && str[i] == ' ')
-                i++;
-            b = 0;
-            a = i;
-            while (str[i] && str[i] != ' ')
-                i++;
-            result = malloc(sizeof(char *) * (i - a + 1));
-            if (!result)
-                perror("MALLOC RESULT PARSING");
-            while (a < i)
-            {
-                result[b] = str[a];
-                b++;
-                a++;
-            }
-            result[b] = '\0';
-            *token = create_list(*token, check_extension(result, *extension), utils);         
-            while (str[i] && str[i] == ' ')
-                i++;
-            parse_line (str, token, extension, i);
-            return (0);
-        
-        }
-
-
-
-
-        if (str[i])
-        {
-            b = 0;
-            a   = i;
-            while (str[i] && str[i] != ' ')
-            {
-                if (str[i] == '=')
-                    utils = 1;
-                i++;
-            }
-
-            while (str[i] && str[i] == ' ')
-                i++;
-
-            while (str[i] == '-')
-            {
-                while (str[i] && str[i] != ' ')
-                    i++;
-                while (str[i] && str[i] == ' ')
-                i++;
-            }
-
-            result = malloc(sizeof(char *) * (i - a + 1));
-            if (!result)
-                perror("MALLOC RESULT PARSING");
-            while (a < i)
-            {
-                if (str[a] == '"')                      //erreur si pas double quote qui referme,
-                    a++;
-                result[b] = str[a];
-                b++;
-                a++;
-            }
-            result[b] = '\0';
-            if (utils == 0)
-            {
-                *token = create_list(*token, result, 1);
-            }
-            if (utils == 1)
-            {
-                *extension = set_extension(result, *extension);
-                utils = 0;
-            }
-            while (str[i] && str[i] == ' ')
-                i++;
-            
-            parse_line (str, token, extension, i);
-            return (0);
-        }
-    }
-    return (1);
+    return (new_element);
 }
+
+list *push_list(db_list *info, list *token, char *str, int type)
+{
+    if (info->lenght == 0)
+        return (push_empty_list (info, token, str, type));
+
+    if (info->lenght > 0)
+        return (push_full_list(info, token, str, type));
+}
+
+db_list *init_liste (db_list *info)
+{
+    info = malloc(sizeof(db_list));
+    if (!info)
+        perror ("MALLOC CREATE LIST");
+    info->first = NULL;
+    info->last = NULL;
+    info->lenght = 0;
+}
+
+
+
 
 int main ()
 {
     char	*str;
     char    *result;
     list    *token;
+    db_list  *info;
     value   *extension;
 
     token = NULL;
     extension = NULL;
+    
+    
+
+    info = init_liste(info);
+
 
     while ((str = readline("minishell$ ")))
     {
-        parse_line(str, &token, &extension, 0);
+        
+        parse_line(str, &token, &extension, 0, &info);
+
+        while (token && token->previous)                 //utilise ce while pour te balader;
+            token = token->previous;
+
+
         while (token)
         {
+            if (!(ft_grammar(&token)))          
+                break;
+
             printf("token = %s\ntype = %d\n\n", token->str, token->type);
-            //check_grammar(token);  PAS ENCORE FAIT ;
-            token = token->previous;
+            token = token->next;
         }
+
         free_list(token);
+        info = init_liste(info);                //je free la structure de controle de la liste
         free(str);
     }
 }
 
-
-
-/*A FAIRE DEMAIN => // HERE_DOC
-               => // integrer integration dans integration a=test -> b=ert$a --->>> A FAIRE
-
-               => faire attention aux tokens; */
