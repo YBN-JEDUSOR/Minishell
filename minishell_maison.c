@@ -17,6 +17,10 @@
     TYPE 6 = PIPE
     TYPE 7 = INFILE
     TYPE 8 = OUTFILE
+    TYPE 9 = &&
+    TYPE 10 = ||
+    TYPE 11 = (
+    TYPE 12 = )
 */
 
 
@@ -83,6 +87,7 @@ int ft_grammar(list **token)
                 printf("bash: syntax error near unexpected token `|'\n");
                 return (0);
         }
+
     }
     return (1);
 }
@@ -202,9 +207,6 @@ db_list *init_liste (db_list *info)
     info->lenght = 0;
 }
 
-
-
-
 int main ()
 {
     char	*str;
@@ -215,20 +217,23 @@ int main ()
 
     token = NULL;
     extension = NULL;
-    
-    
 
     info = init_liste(info);
 
-
     while ((str = readline("minishell$ ")))
     {
-        
         parse_line(str, &token, &extension, 0, &info);
 
         while (token && token->previous)                 //utilise ce while pour te balader;
             token = token->previous;
 
+        if (!strcmp(token->str, "exit"))
+        {
+            free_list(token);
+            info = init_liste(info);                    //fermeture programme
+            free(str);
+            break;
+        }                 
 
         while (token)
         {
@@ -245,3 +250,5 @@ int main ()
     }
 }
 
+
+            //FAIRE ATTENTION AU STRNCMP

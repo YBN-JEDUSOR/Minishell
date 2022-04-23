@@ -6,7 +6,7 @@
 /*   By: rlanani <rlanani@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/14 16:34:47 by rlanani           #+#    #+#             */
-/*   Updated: 2022/04/23 18:34:59 by rlanani          ###   ########.fr       */
+/*   Updated: 2022/04/23 22:26:37 by rlanani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 #include <readline/history.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 
 
 /* LEXIQUE =
