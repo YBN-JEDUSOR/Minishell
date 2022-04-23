@@ -87,11 +87,9 @@ int ft_grammar(list **token)
                 printf("bash: syntax error near unexpected token `|'\n");
                 return (0);
         }
-
     }
     return (1);
 }
-
 
 value *set_extension(char *str, value *extension)
 {

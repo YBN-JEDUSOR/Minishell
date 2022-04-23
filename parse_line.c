@@ -110,7 +110,11 @@ int parse_line (char *str, list **token, value **extension, int i, db_list **inf
             b = 0;
             a = i;
             while (str[i] && str[i] != ' ')
+            {
                 i++;
+                if (str[i] == ')')
+                    break;
+            }
             result = malloc(sizeof(char *) * (i - a + 1));
             if (!result)
                 perror("MALLOC RESULT PARSING");
