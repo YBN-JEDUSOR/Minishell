@@ -11,55 +11,7 @@ int parse_line (char *str, list **token, value **extension, int i, db_list **inf
     utils = 0;
     while (str[i])
     {   
-        if (str[i] == 34)                                       // " "
-        {
-            b = 0;
-            i++;
-            a = i;
-            while (str[i] && str[i] != 34)
-                i++;
-            result = malloc(sizeof(char *) * (i - a + 1));
-            if (!result)
-                perror("MALLOC RESULT PARSING");
-            while (a < i)
-            {
-                result[b] = str[a];
-                b++;
-                a++;
-            }
-            result[b] = '\0';
-            i++;
-            *token = push_list(*info, *token, result, 3);
-            while (str[i] && str[i] == ' ')
-                i++;
-            parse_line (str, token, extension, i, info);
-            return (0);
-        }
-        if (str[i] == 39)                                        // ' '
-        {
-            b = 0;
-            i++;
-            a = i;
-            while (str[i] && str[i] != 39)
-                i++;
-            result = malloc(sizeof(char *) * (i - a + 1));
-            if (!result)
-                perror("MALLOC RESULT PARSING");
-            while (a < i)
-            {
-                result[b] = str[a];
-                b++;
-                a++;
-            }
-            result[b] = '\0';
-            i++;
-            *token = push_list(*info, *token, result, 4);;
-            while (str[i] && str[i] == ' ')
-                i++;
-            parse_line (str, token, extension, i, info);
-            return (0);   
-        }
-        if (str[i] == '|' && str[i] != '|')
+        if (str[i] == '|' && str[i + 1] != '|')
         {
             b = 0;
             result = malloc(sizeof(char *) * (2));
@@ -200,7 +152,7 @@ int parse_line (char *str, list **token, value **extension, int i, db_list **inf
                 perror("MALLOC RESULT PARSING");
             while (a < i)
             {
-                if (str[a] == '"')                      //erreur si pas double quote qui referme,
+                if (str[a] == 34 || str[a] == 39)                      //erreur si pas double quote qui referme,
                     a++;
                 result[b] = str[a];
                 b++;

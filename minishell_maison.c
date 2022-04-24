@@ -68,7 +68,7 @@ void free_list(list *token)
 
 int ft_grammar(list **token)
 {
-    if (*token);
+    if (*token)
     {
         if ((*token)->type == 1)
         {
@@ -82,7 +82,7 @@ int ft_grammar(list **token)
                 (*token)->type = 2;
         }
         
-        if ((*token)->type == 5 && (!(*token)->previous))
+        if ((*token)->type == 5 && ((!(*token)->previous) || (!(*token)->next)))
         {
                 printf("bash: syntax error near unexpected token `|'\n");
                 return (0);
@@ -193,6 +193,7 @@ list *push_list(db_list *info, list *token, char *str, int type)
 
     if (info->lenght > 0)
         return (push_full_list(info, token, str, type));
+    return (0);
 }
 
 db_list *init_liste (db_list *info)
@@ -203,6 +204,8 @@ db_list *init_liste (db_list *info)
     info->first = NULL;
     info->last = NULL;
     info->lenght = 0;
+
+    return (info);
 }
 
 int main ()
@@ -220,6 +223,7 @@ int main ()
 
     while ((str = readline("minishell$ ")))
     {
+
         parse_line(str, &token, &extension, 0, &info);
 
         while (token && token->previous)                 //utilise ce while pour te balader;
@@ -227,8 +231,7 @@ int main ()
 
         if (!strcmp(token->str, "exit"))
         {
-            free_list(token);
-            info = init_liste(info);                    //fermeture programme
+            free_list(token);                      //fermeture programme          
             free(str);
             break;
         }                 
@@ -238,6 +241,8 @@ int main ()
             if (!(ft_grammar(&token)))          
                 break;
 
+            add_history(str);
+
             printf("token = %s\ntype = %d\n\n", token->str, token->type);
             token = token->next;
         }
@@ -246,6 +251,9 @@ int main ()
         info = init_liste(info);                //je free la structure de controle de la liste
         free(str);
     }
+
+    free (extension);
+
 }
 
 
