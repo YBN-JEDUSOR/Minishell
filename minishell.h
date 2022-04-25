@@ -6,7 +6,7 @@
 /*   By: rlanani <rlanani@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/14 16:34:47 by rlanani           #+#    #+#             */
-/*   Updated: 2022/04/23 22:26:37 by rlanani          ###   ########.fr       */
+/*   Updated: 2022/04/25 16:42:39 by rlanani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,10 +48,10 @@ typedef struct extension
 } value ;
 
 
-int parse_line (char *str, list **token, value **extension, int i, db_list **info);
+int parse_line (char *str, list **token, value **extension, int i, db_list **info, char **env);
 list *push_full_list (db_list *info, list *token, char *str, int type);
 list *push_list(db_list *info, list *token, char *str, int type);
 db_list *init_liste (db_list *info);
 list *push_empty_list (db_list *info, list *token, char *str, int type);
-char *check_extension(char *str, value *extension);
-value *set_extension(char *str, value *extension);
+char *check_extension(char *str, char **env);
+value *set_extension(char *str, char **env);

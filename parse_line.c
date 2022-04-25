@@ -1,7 +1,7 @@
 #include "minishell.h"
 
 
-int parse_line (char *str, list **token, value **extension, int i, db_list **info)
+int parse_line (char *str, list **token, value **extension, int i, db_list **info, char ** env)
 {
     char                *result; 
     int                 a;
@@ -20,10 +20,10 @@ int parse_line (char *str, list **token, value **extension, int i, db_list **inf
             result[0] = str[i];
             result[1] = '\0';
             i++;
-            *token = push_list(*info, *token, result, 5);;
+            *token = push_list(*info, *token, result, 5);
             while (str[i] && str[i] == ' ')
                 i++;
-            parse_line (str, token, extension, i, info);
+            parse_line (str, token, extension, i, info, env);
             return (0);   
         }
         if (str[i] == '$')
@@ -32,7 +32,7 @@ int parse_line (char *str, list **token, value **extension, int i, db_list **inf
             i++;
             a = i;
             
-            while (str[i] && str[i] != ' ' )
+            while (str[i] && str[i] != ' ')
                 i++;
             result = malloc(sizeof(char *) * (i - a + 1));
             if (!result)
@@ -44,10 +44,10 @@ int parse_line (char *str, list **token, value **extension, int i, db_list **inf
                 a++;
             }
             result[b] = '\0';
-            *token = push_list(*info, *token, check_extension(result, *extension), 6);         
+            *token = push_list(*info, *token, check_extension(result, env), 6);         
             while (str[i] && str[i] == ' ')
                 i++;
-            parse_line (str, token, extension, i, info);
+            parse_line (str, token, extension, i, info, env);
             return (0);
         }
 
@@ -77,10 +77,10 @@ int parse_line (char *str, list **token, value **extension, int i, db_list **inf
                 a++;
             }
             result[b] = '\0';
-            *token = push_list(*info, *token, check_extension(result, *extension), utils);         
+            *token = push_list(*info, *token, result, utils);         
             while (str[i] && str[i] == ' ')
                 i++;
-            parse_line (str, token, extension, i, info);
+            parse_line (str, token, extension, i, info, env);
             return (0);
         }
 
@@ -95,10 +95,10 @@ int parse_line (char *str, list **token, value **extension, int i, db_list **inf
             result[0] = str[i];
             result[1] = '\0';
             i++;
-            *token = push_list(*info, *token, check_extension(result, *extension), utils);         
+            *token = push_list(*info, *token, result, utils);         
             while (str[i] && str[i] == ' ')
                 i++;
-            parse_line (str, token, extension, i, info);
+            parse_line (str, token, extension, i, info, env);
             return (0);
         }
 
@@ -114,7 +114,7 @@ int parse_line (char *str, list **token, value **extension, int i, db_list **inf
             *token = push_list(*info, *token, result, 9);;
             while (str[i] && str[i] == ' ')
                 i++;
-            parse_line (str, token, extension, i, info);
+            parse_line (str, token, extension, i, info, env);
             return (0);   
         }
 
@@ -130,7 +130,7 @@ int parse_line (char *str, list **token, value **extension, int i, db_list **inf
             *token = push_list(*info, *token, result, 10);;
             while (str[i] && str[i] == ' ')
                 i++;
-            parse_line (str, token, extension, i, info);
+            parse_line (str, token, extension, i, info, env);
             return (0);   
         }
 
@@ -169,7 +169,7 @@ int parse_line (char *str, list **token, value **extension, int i, db_list **inf
             }
             while (str[i] && str[i] == ' ')
                 i++;
-            parse_line (str, token, extension, i, info);
+            parse_line (str, token, extension, i, info, env);
             return (0);
         }
     }

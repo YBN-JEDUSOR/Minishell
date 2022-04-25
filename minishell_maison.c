@@ -106,75 +106,55 @@ int ft_grammar(list **token)
 }
 
 
-
-
-
-/*value *set_extension(char *str, value *extension)
+char	*ft_substr(char const *s, unsigned int start, size_t len)
 {
-    int i;
-    int a; 
-    int b;
-    int c;
+	unsigned int		lenstr;
+	char				*t;
+	int					i;
 
-    i = 0;
-    a = 0;
-    b = 0;
-    c = 0;
-    value *new_element;
-    new_element = malloc(sizeof(value));
-    if (!new_element)
-        perror ("MALLOC CREATE VALUE");
-    while (str[i])
-    {
-        while (str[i] && str[i] != '=')
-            i++;
-        a = i;
-        i++;
-        while (str[i])
-            i++;
-        b = (i - a - 1);
-    }
-    new_element->ancient = malloc(sizeof(char *) * a + 1);
-    new_element->new = malloc(sizeof(char *) * b + 1);
-    if (!new_element->ancient || !new_element->new)
-        perror ("MALLOC CREATE STRING VALUE");
-    while (c < a)
-    {
-        new_element->ancient[c] = str[c];
-        c++;
-    }
-    c++;
-    a = 0;
-    while (str[c])
-    {
-        new_element->new[a] = str[c];  //integrer integration dans integration a=test -> b=ert$a --->>> A FAIRE
-        c++;
-        a++;
-    }
-    str[c] = '\0';
-    new_element->previous = extension;
-    return (new_element);
-}*/
-
-
-
-char *check_extension(char *str, value *extension)
-{
-    int i;
-
-    i = 0;
-    while (extension)
-    {
-        if(!strcmp((const char *)extension->ancient, (const char *)str))
-            return(extension->new);
-        extension = extension->previous;
-    }
-    return (str);
+	i = 0;
+	if (!s)
+		return (0);
+	lenstr = strlen(s);
+	if (start >= lenstr)
+	{
+		t = malloc(1);
+		t[0] = '\0';
+		return (t);
+	}
+	if (len > (strlen(s) - start))
+		t = malloc(sizeof(char) * ((strlen(s) - start)) + 1);
+	else
+		t = malloc(sizeof(char) * (len) + 1);
+	if (!(t))
+		return (0);
+	while (len-- && s[start])
+		t[i++] = s[start++];
+	t[i] = '\0';
+	return (t);
 }
 
 
+char *check_extension(char *str, char **env)
+{
+    int i;
+    int k;
+    char *result;
 
-
+    i = 0;
+    k = 0;
+    while (env[i])
+    {
+        if(!strncmp((const char *)env[i], (const char *)str, strlen(env[i])))
+        {
+            while (env[i][k] != '=')
+                k++;
+            result = ft_substr(env[i], k, strlen(env[i]));
+        }
+        i++;
+    }
+    return (result);
+}
 
 
 list *push_empty_list (db_list *info, list *token, char *str, int type)
@@ -192,7 +172,6 @@ list *push_empty_list (db_list *info, list *token, char *str, int type)
     info->lenght = 1;
     return (new_element);
 }
-
 
 list *push_full_list (db_list *info, list *token, char *str, int type)
 {
@@ -233,7 +212,6 @@ db_list *init_liste (db_list *info)
     return (info);
 }
 
-
 char **export_env(list *token, char **env)
 {
     int i; 
@@ -252,12 +230,9 @@ char **export_env(list *token, char **env)
         i++;
     }
     new_element[i] = strdup(token->str);
-    new_element[i + 1] = 0x00;
+    new_element[i + 1] = '\0';
     return (new_element);
 }
-
-
-
 
 
 int build_in (list  *token, char ***env)
@@ -282,10 +257,6 @@ int build_in (list  *token, char ***env)
 
 
 
-
-
-
-
 int main (int argc, char **argv, char **env)
 {
     char	*str;
@@ -302,7 +273,7 @@ int main (int argc, char **argv, char **env)
     while ((str = readline("minishell$ ")))
     {
 
-        parse_line(str, &token, &extension, 0, &info);
+        parse_line(str, &token, &extension, 0, &info, env);
 
         while (token && token->previous)                 //utilise ce while pour te balader;
             token = token->previous;
@@ -343,5 +314,7 @@ int main (int argc, char **argv, char **env)
 }
 
 
-            //FAIRE ATTENTION   - AU STRNCMP
-         //                     - AU STRDUP
+ /*               FAIRE ATTENTION - AU STRNCMP
+                                  - AU STRDUP
+                                  - AU STRNCMP
+                                  - AU STRLEN*/
