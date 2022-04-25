@@ -163,8 +163,10 @@ int parse_line (char *str, list **token, value **extension, int i, db_list **inf
                 *token = push_list(*info, *token, result, 1);
 
             if (utils == 1)
-                *extension = set_extension(result, *extension);
+            {
+               *token = push_list(*info, *token, result, 13);
                 utils = 0;
+            }
             while (str[i] && str[i] == ' ')
                 i++;
             parse_line (str, token, extension, i, info);

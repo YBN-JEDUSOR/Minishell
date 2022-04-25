@@ -21,38 +21,38 @@
     TYPE 10 = ||
     TYPE 11 = (
     TYPE 12 = )
+    TYPE 13 = EXPORT
 */
 
 
-
-/*If the end of input is recognized, the current token shall be delimited. If there is no current token, the end-of-input indicator shall be returned as the token.
-
-If the previous character was used as part of an operator and the current character is not quoted and can be used with the current characters to form an operator, it shall be used as part of that (operator) token.
-
-If the previous character was used as part of an operator and the current character cannot be used with the current characters to form an operator, the operator containing the previous character shall be delimited.
-
-If the current character is backslash, single-quote, or double-quote ( '\', '", or ' )' and it is not quoted, it shall affect quoting for subsequent characters up to the end of the quoted text. 
-The rules for quoting are as described in Quoting. During token recognition no substitutions shall be actually performed, and the result token shall contain exactly the characters that appear in the input (except for <newline> joining),
-unmodified, including any embedded or enclosing quotes or substitution operators, between the quote mark and the end of the quoted text. The token shall not be delimited by the end of the quoted field.
-
-If the current character is an unquoted '$' or '`', the shell shall identify the start of any candidates for parameter expansion ( Parameter Expansion), 
-command substitution ( Command Substitution), or arithmetic expansion ( Arithmetic Expansion) from their introductory unquoted character sequences: '$' or "${", "$(" or '`', and "$((", respectively. 
-The shell shall read sufficient input to determine the end of the unit to be expanded (as explained in the cited sections). While processing the characters, 
-if instances of expansions or quoting are found nested within the substitution, the shell shall recursively process them in the manner specified for the construct that is found. 
-The characters found from the beginning of the substitution to its end, allowing for any recursion necessary to recognize embedded constructs, shall be included unmodified in the result token, including any embedded or 
-enclosing substitution operators or quotes. The token shall not be delimited by the end of the substitution.
-
-If the current character is not quoted and can be used as the first character of a new operator, the current token (if any) shall be delimited. The current character shall be used as the beginning of the next (operator) token.
-
-If the current character is an unquoted <newline>, the current token shall be delimited.
-
-If the current character is an unquoted <blank>, any token containing the previous character is delimited and the current character shall be discarded.
-
-If the previous character was part of a word, the current character shall be appended to that word.
-
-If the current character is a '#', it and all subsequent characters up to, but excluding, the next <newline> shall be discarded as a comment. The <newline> that ends the line is not considered part of the comment.
-
-The current character is used as the start of a new word.*/
+/*• Afficher un prompt en l’attente d’une nouvelle commande.
+• Posséder un historique fonctionnel.
+• Chercher et lancer le bon exécutable (en se basant sur la variable d’environnement PATH, ou sur un chemin relatif ou absolu).
+• Ne pas utiliser plus d’une variable globale. Réfléchissez-y car vous devrez jus- tifier son utilisation.
+• Ne pas interpréter de quotes (guillemets) non fermés ou de caractères spéciaux non demandés dans le sujet, tels que \ (le backslash) ou ; (le point-virgule).
+• Gérer ’ (single quote) qui doit empêcher le shell d’interpréter les méta-caractères présents dans la séquence entre guillemets.
+• Gérer " (double quote) qui doit empêcher le shell d’interpréter les méta-caractères présents dans la séquence entre guillemets sauf le $ (signe dollar).
+4
+ Minishell Aussi mignon qu’un vrai shell
+• Implémenter les redirections :
+◦ < doit rediriger l’entrée.
+◦ > doit rediriger la sortie.
+◦ << doit recevoir un délimiteur et lire l’input donné jusqu’à rencontrer une ligne contenant le délimiteur. Cependant, l’historique n’a pas à être mis à jour !
+◦ >> doit rediriger la sortie en mode append.
+• Implémenter les pipes (caractère |). La sortie de chaque commande de la pipeline
+est connectée à l’entrée de la commande suivante grâce à un pipe.
+• Gérer les variables d’environnement (un $ suivi d’une séquence de caractères)
+qui doivent être substituées par leur contenu.
+• Gérer $? qui doit être substitué par le statut de sortie de la dernière pipeline exécutée au premier plan.
+• Gérer ctrl-C, ctrl-D et ctrl-\ qui doivent fonctionner comme dans bash.
+• En mode interactif :
+◦ ctrl-C affiche un nouveau prompt sur une nouvelle ligne. ◦ ctrl-D quitte le shell.
+◦ ctrl-\ ne fait rien.
+• Votre shell doit implémenter les builtins suivantes :
+◦ echo et l’option -n
+◦ cd uniquement avec un chemin relatif ou absolu ◦ pwd sans aucune option
+◦ export sans aucune option
+◦ unset sans aucune option*/
 
 void free_list(list *token)
 {
@@ -63,6 +63,19 @@ void free_list(list *token)
         temp = token;
         free(temp);
         token = token->previous;
+    }
+}
+
+void free_env(char **env)
+{
+    int i;
+
+    i = 0;
+
+    while (env[i])
+    {
+        free(env[i]);
+        i = i - 1;
     }
 }
 
@@ -87,11 +100,16 @@ int ft_grammar(list **token)
                 printf("bash: syntax error near unexpected token `|'\n");
                 return (0);
         }
+
     }
     return (1);
 }
 
-value *set_extension(char *str, value *extension)
+
+
+
+
+/*value *set_extension(char *str, value *extension)
 {
     int i;
     int a; 
@@ -136,7 +154,9 @@ value *set_extension(char *str, value *extension)
     str[c] = '\0';
     new_element->previous = extension;
     return (new_element);
-}
+}*/
+
+
 
 char *check_extension(char *str, value *extension)
 {
@@ -151,6 +171,11 @@ char *check_extension(char *str, value *extension)
     }
     return (str);
 }
+
+
+
+
+
 
 list *push_empty_list (db_list *info, list *token, char *str, int type)
 {
@@ -208,7 +233,60 @@ db_list *init_liste (db_list *info)
     return (info);
 }
 
-int main ()
+
+char **export_env(list *token, char **env)
+{
+    int i; 
+
+    i = 0;
+    char **new_element;
+    while (env[i])
+        i++;
+    new_element = malloc(sizeof(char **) * i + 1);
+    if (!new_element)
+        perror("MALLOC EXPORT");
+    i = 0;
+    while (env[i])
+    {
+        new_element[i] = strdup(env[i]);
+        i++;
+    }
+    new_element[i] = strdup(token->str);
+    new_element[i + 1] = 0x00;
+    return (new_element);
+}
+
+
+
+
+
+int build_in (list  *token, char ***env)
+{
+    int i;
+
+    i = 0;
+    if (!strcmp(token->str, "exit"))
+        return (1);
+    if (!strcmp(token->str, "env"))                                         //affiche env;
+    {
+        while (env[0][i])
+            printf("%s\n", env[0][i++]);
+        return (2);
+    }
+    if (!strcmp(token->str, "export") && token->next && token->next->type == 13)
+    {
+        *env = export_env(token->next, *env);                                     //env
+    }                 
+    return (0);
+}
+
+
+
+
+
+
+
+int main (int argc, char **argv, char **env)
 {
     char	*str;
     char    *result;
@@ -229,32 +307,41 @@ int main ()
         while (token && token->previous)                 //utilise ce while pour te balader;
             token = token->previous;
 
-        if (!strcmp(token->str, "exit"))
-        {
-            free_list(token);                      //fermeture programme          
-            free(str);
-            break;
-        }                 
 
+        
+
+        
+        
         while (token)
         {
             if (!(ft_grammar(&token)))          
                 break;
 
-            add_history(str);
+            add_history(str);                       //historique
+
+            if (build_in(token, &env) == 2)          //buildin
+                break;
+
 
             printf("token = %s\ntype = %d\n\n", token->str, token->type);
             token = token->next;
         }
+
+
+
+
+
+
+
+
 
         free_list(token);
         info = init_liste(info);                //je free la structure de controle de la liste
         free(str);
     }
 
-    free (extension);
-
 }
 
 
-            //FAIRE ATTENTION AU STRNCMP
+            //FAIRE ATTENTION   - AU STRNCMP
+         //                     - AU STRDUP
