@@ -6,7 +6,7 @@
 /*   By: rlanani <rlanani@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/14 16:34:47 by rlanani           #+#    #+#             */
-/*   Updated: 2022/04/23 22:26:37 by rlanani          ###   ########.fr       */
+/*   Updated: 2022/04/30 16:36:44 by rlanani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,17 +69,17 @@ typedef struct s_pipe_exec
   char  *bin;
   char  **newargs;
   char  ***env;
-  int status;
+  int   status;
 } t_pipe_exec;
 
 typedef struct s_minishell
 {
-  char	*line;
-  char    *result;
-  t_token    *token;
-  t_db_list  *info;
+  char	      *line;
+  char        *result;
+  t_token     *token;
+  t_db_list   *info;
   t_extension *extension;
-  char  **env;
+  char        **env;
 } t_minishell;
 
 int parse_line (char *str, t_token **token, int i, t_db_list **info, char **env, int quote);
@@ -92,3 +92,4 @@ t_extension *set_extension(char *str, t_extension *extension);
 char	*ft_strjoin(char const *s1, char const *s2);
 char	*ft_substr(char const *s, unsigned int start, size_t len);
 size_t	ft_strlen(const char *s);
+int here_doc(t_token *token, t_pipe_exec *pipe_exec);

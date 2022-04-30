@@ -664,6 +664,7 @@ int    execute_commands(t_token *token, t_pipe_exec *pipe_exec, char ***env)
 {
     int id;
 
+    here_doc(token, pipe_exec);
     pipe_exec->save_input = dup(STDIN_FILENO);
     pipe_exec->save_output = dup(STDOUT_FILENO);
     input_redirection(pipe_exec->infile, &pipe_exec->input, pipe_exec->save_input);
@@ -744,9 +745,11 @@ int main(int argc, char *argv[], char *env[])
     t_minishell minishell;
 
     minishell.info = init_minishell(&minishell, env);
-    
+
+
     while ((minishell.line = readline("minishell$ ")))
     {
+
         parse_line(minishell.line, &minishell.token, 0, &minishell.info, env, 0);
         
         while (minishell.token && minishell.token->previous)                 
@@ -761,7 +764,6 @@ int main(int argc, char *argv[], char *env[])
 
             add_history(minishell.line);
 
-           
 
             if (!minishell.token->next)
                 break;
@@ -777,7 +779,7 @@ int main(int argc, char *argv[], char *env[])
             if (execute_line(minishell.token, &env))
                 return (1);
 
-        rl_replace_line (">>", 1);
+       
 
         if (minishell.token)
             free_list(minishell.token);

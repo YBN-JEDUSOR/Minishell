@@ -241,16 +241,37 @@ int parse_line (char *str, t_token **token, int i, t_db_list **info, char **env,
 }
 
 
-/*int here_doc(t_db_list *token, t_pipe_exec **pipe_exec)
+int here_doc(t_token *token, t_pipe_exec *pipe_exec)
 {
-    while 
+    
+    int     pid;
+    char    *str;
+    int     fd;
+
+    fd = 5;
+    pid = fork();
+    if (!pid)
+    {
+        // if access int fd ... eviter d'avoir un fichier ouvert 
+        while ((str = readline("> ")))
+        {
+
+        }
+        exit(1);
+
+    }
+   wait(0);
+    
 
 
 
 
 
 
-}*/
+
+    //creer le fichier 
+
+}
 
 
             
