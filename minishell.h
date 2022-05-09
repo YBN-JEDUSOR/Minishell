@@ -70,6 +70,7 @@ typedef struct s_pipe_exec
   char  **newargs;
   char  ***env;
   int   status;
+  int   here_doc;
 } t_pipe_exec;
 
 typedef struct s_minishell
@@ -80,7 +81,11 @@ typedef struct s_minishell
   t_db_list   *info;
   t_extension *extension;
   char        **env;
+  int         here_doc;
+  int         grammar;
 } t_minishell;
+
+
 
 int parse_line (char *str, t_token **token, int i, t_db_list **info, char **env, int quote);
 t_token *push_full_list (t_db_list *info, t_token *token, char *str, int type);
@@ -92,4 +97,4 @@ t_extension *set_extension(char *str, t_extension *extension);
 char	*ft_strjoin(char const *s1, char const *s2);
 char	*ft_substr(char const *s, unsigned int start, size_t len);
 size_t	ft_strlen(const char *s);
-int here_doc(t_token *token, t_pipe_exec *pipe_exec);
+int here_doc(t_token *token);

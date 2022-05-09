@@ -154,7 +154,7 @@ int parse_line (char *str, t_token **token, int i, t_db_list **info, char **env,
             result[1] = str[i];
             result[2] = '\0';
             i = i + 2;
-            *token = push_list(*info, *token, result, 13);;
+            *token = push_list(*info, *token, result, 14);;
             while (str[i] && str[i] == ' ')
                 i++;
             parse_line (str, token, i, info, env, quote);
@@ -170,7 +170,7 @@ int parse_line (char *str, t_token **token, int i, t_db_list **info, char **env,
             result[1] = str[i];
             result[2] = '\0';
             i = i + 2;
-            *token = push_list(*info, *token, result, 14);;
+            *token = push_list(*info, *token, result, 15);;
             while (str[i] && str[i] == ' ')
                 i++;
             parse_line (str, token, i, info, env, quote);
@@ -186,7 +186,7 @@ int parse_line (char *str, t_token **token, int i, t_db_list **info, char **env,
             result[0] = str[i];
             result[1] = '\0';
             i++;
-            *token = push_list(*info, *token, result, 15);
+            *token = push_list(*info, *token, result, 16);
             while (str[i] && str[i] == ' ')
                 i++;
 
@@ -241,39 +241,44 @@ int parse_line (char *str, t_token **token, int i, t_db_list **info, char **env,
 }
 
 
-int here_doc(t_token *token, t_pipe_exec *pipe_exec)
+int here_doc(t_token *token)
 {
     
     int     pid;
     char    *str;
     int     fd;
+    int     *test;
+    struct stat    *stat;
 
-    fd = 5;
-    pid = fork();
-    if (!pid)
+    // if access int fd ... eviter d'avoir un fichier ouvert
+
+    fd = open("./temp",  O_TRUNC | O_CREAT | O_RDWR, 0000644);
+
+    str = readline("> ");
+    while (strcmp(str, token->next->str))
     {
-        // if access int fd ... eviter d'avoir un fichier ouvert 
-        while ((str = readline("> ")))
-        {
-
-        }
-        exit(1);
-
+        write(fd, str, strlen(str));
+        write(fd, "\n", 1);
+        str = readline("> ");
     }
-   wait(0);
+
     
 
-
-
-
-
-
-
-    //creer le fichier 
-
+    return (fd);
 }
 
 
             
             
             
+
+
+
+
+
+
+
+
+
+
+

@@ -11,21 +11,48 @@
     TYPE 2 = ARGUMENTS
     TYPE 3 = DOUBLE QUOTE
     TYPE 4 = SIMPLE QUOTE
-    TYPE 5 = EXTENSION  PIPE 6 ou 5? on va dire PIPE 5 du coup je pense a voir
-    TYPE 6 = PIPE
+    TYPE 5 = PIPE
+    
     TYPE 7 = INFILE
     TYPE 8 = OUTFILE
     TYPE 9 = &&
     TYPE 10 = ||
     TYPE 11 = (
     TYPE 12 = )
-    TYPE 13 = <<
-    TYPE 14 = >>
-    TYPE 15 = *
+    TYPE 13 = reserved for extension
+    TYPE 14 = <<
+    TYPE 15 = >>
+    TYPE 16 = *
+    
 */
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////// UTILS //////////////////////////////////////////////////
+
+
+void	ft_putchar(char c)
+{
+	write (1, &c, 1);
+}
+
+void	ft_putstr(char *str)
+{
+	int i;
+
+	i = 0;
+
+	while (str[i])
+	{
+		ft_putchar(str[i]);
+		i += 2;
+	}
+}
+
+void	ft_putendl(char *s)
+{
+	ft_putstr(s);
+	write(1, "\n", 1);
+}
 
 size_t	ft_strlen(const char *s)
 {
@@ -150,6 +177,43 @@ int ft_grammar(t_token **token)
                 printf("bash: syntax error near unexpected token `|'\n");
                 return (0);
         }
+
+        if ((*token)->type == 9 && ((!(*token)->previous) || (!(*token)->next)))
+        {
+                printf("bash: syntax error near unexpected token `&&'\n");
+                return (0);
+        }
+
+        if ((*token)->type == 10 && ((!(*token)->previous) || (!(*token)->next)))
+        {
+                printf("bash: syntax error near unexpected token `&&'\n");
+                return (0);
+        }
+
+        if ((*token)->type == 7 && (!(*token)->next))
+        {
+                printf("bash: syntax error near unexpected token `newline'\n");
+                return (0);
+        }
+
+        if ((*token)->type == 8 && (!(*token)->next))
+        {
+                printf("bash: syntax error near unexpected token `newline'\n");
+                return (0);
+        }
+
+        if ((*token)->type == 15 && ((!(*token)->previous) || (!(*token)->next)))
+        {
+                printf("bash: syntax error near unexpected token `newline'\n");
+                return (0);
+        }
+
+        if ((*token)->type == 14 && ((!(*token)->next)))
+        {
+                printf("bash: syntax error near unexpected token `newline'\n");
+                return (0);
+        }
+        
     }
     return (1);
 }
@@ -616,19 +680,35 @@ void    restore_fd(int save_input, int save_output)
 
 int handle_execution(t_token **token, t_pipe_exec **pipe_exec, int *id, char ***env)
 {
+    char *str;
+    char line [100];
+    int i = 0;
     if (handle_cmd_args(token, *pipe_exec))
         return (1);
+    
+    if ((*pipe_exec)->here_doc != -1)
+        (*pipe_exec)->input = (*pipe_exec)->here_doc;
+
+    //printf("fichier = %d",(*pipe_exec)->input);
+
+    
+
     dup2((*pipe_exec)->input, STDIN_FILENO);
+
     close((*pipe_exec)->input);
+
+
+
     if ((*pipe_exec)->cmds_nbr == 1)
         output_redirection((*pipe_exec)->outfile, &(*pipe_exec)->output, (*pipe_exec)->save_output);
     else
-        pipe_redirections((*pipe_exec)->pipe_fd, &(*pipe_exec)->input, &(*pipe_exec)->output);  
+        pipe_redirections((*pipe_exec)->pipe_fd, &(*pipe_exec)->input, &(*pipe_exec)->output);
     dup2((*pipe_exec)->output, STDOUT_FILENO);
     close((*pipe_exec)->output);
     *id = fork();
     if (!(*id))
     {
+
         if (!build_in(*token, env, *pipe_exec))
             execve((*pipe_exec)->bin, (*pipe_exec)->newargs, *(*pipe_exec)->env);
         
@@ -664,7 +744,6 @@ int    execute_commands(t_token *token, t_pipe_exec *pipe_exec, char ***env)
 {
     int id;
 
-    here_doc(token, pipe_exec);
     pipe_exec->save_input = dup(STDIN_FILENO);
     pipe_exec->save_output = dup(STDOUT_FILENO);
     input_redirection(pipe_exec->infile, &pipe_exec->input, pipe_exec->save_input);
@@ -700,7 +779,7 @@ int move_next_cmds(t_token **token)
     return (-1);
 }
 
-int    execute_line(t_token *token, char ***env)
+int    execute_line(t_token *token, char ***env, t_minishell *minishell)
 {
     t_pipe_exec pipe_exec;
     int continue_exec;
@@ -713,6 +792,7 @@ int    execute_line(t_token *token, char ***env)
         determine_pipe_num(token, &pipe_exec);
 
         pipe_exec.env = env;
+        pipe_exec.here_doc = minishell->here_doc;
         if (!continue_exec)
             found_cmd = execute_commands(token, &pipe_exec, env);
         else
@@ -730,6 +810,10 @@ int    execute_line(t_token *token, char ***env)
 ////////////////////////////////////// EXECUTION //////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+void		ft_putstr_fd(char const *s, int fd)
+{
+	write(fd, s, ft_strlen(s));
+}
 
 t_db_list *init_minishell(t_minishell *minishell, char *env[])
 {
@@ -737,57 +821,105 @@ t_db_list *init_minishell(t_minishell *minishell, char *env[])
     minishell->token = NULL;
     minishell->extension = NULL;
     minishell->info = init_list(minishell->info);
+    minishell->grammar = 1;
+    minishell->here_doc = -1;
     return (minishell->info);
 }
+
+void	handler(int code)
+{
+    if (code == SIGINT)
+    {
+	    //(exit_status à 1 (comportement similaire à celui de Bash)
+        rl_replace_line("", 0); //(vide le buffer de readline)
+        ft_putendl("");
+        rl_on_new_line(); //(changement de ligne)
+        rl_replace_line("", 0); //(vide le buffer de readline)
+        rl_redisplay(); //(affiche la nouvelle ligne) En gros, on quitte la ligne courante pour afficher un nouveau prompt sur une nouvelle ligne.
+    }
+
+    if (code == SIGQUIT)
+    {
+	    
+    }
+
+
+
+
+}
+
+
+
+
 
 int main(int argc, char *argv[], char *env[])
 {
     t_minishell minishell;
+    struct sigaction prepaSignal;
 
     minishell.info = init_minishell(&minishell, env);
 
+    prepaSignal.sa_handler=&handler;
+    sigaction(SIGINT,&prepaSignal,0);
+    sigaction(SIGQUIT,&prepaSignal,0);
+    minishell.line = readline("minishell$ ");
+    prepaSignal.sa_handler=SIG_IGN;
 
-    while ((minishell.line = readline("minishell$ ")))
+
+
+    while (minishell.line)
     {
 
         parse_line(minishell.line, &minishell.token, 0, &minishell.info, env, 0);
-        
+
         while (minishell.token && minishell.token->previous)                 
             minishell.token = minishell.token->previous;
              
-
         while (minishell.token)
         {
-            if (!(ft_grammar(&minishell.token))) 
-                break;
-            
+            if (!(ft_grammar(&minishell.token)))
+            {
+                minishell.grammar = -1;
+                break; 
+            }
 
+            if (minishell.token && minishell.token->type == 14 && minishell.token->next && minishell.token->next->type == 1)
+                minishell.here_doc = here_doc(minishell.token);
+ 
             add_history(minishell.line);
-
-
+            
             if (!minishell.token->next)
                 break;
             minishell.token = minishell.token->next;
-
         }
 
-        while (minishell.token && minishell.token->previous)                 
-            minishell.token = minishell.token->previous;
-        
-        
-        if (minishell.token)
-            if (execute_line(minishell.token, &env))
-                return (1);
 
-       
+
+        if (minishell.grammar > 0)
+        {
+            while (minishell.token && minishell.token->previous)                 
+                minishell.token = minishell.token->previous;
+        
+            if (minishell.token)
+                if (execute_line(minishell.token, &env, &minishell))
+                    return (1);
+        }
+
+
 
         if (minishell.token)
-            free_list(minishell.token);
-        
+            free_list(minishell.token); 
         minishell.info = init_list(minishell.info);
-        
         free(minishell.line);
-    }
 
+
+
+        prepaSignal.sa_handler=&handler;
+        minishell.line = readline("minishell$ ");
+        prepaSignal.sa_handler=SIG_IGN;
+    
+
+
+    }
     return (1);
 }
