@@ -10,7 +10,7 @@ char * dollars_sign(char *str, t_token **token, int *i, t_db_list **info, char *
     *i = (*i) + 1;
     a = (*i);
             
-    while (str[(*i)] && str[(*i)] != ' ' && str[(*i)] != 34)                   /// FAIRE UNE FOCNtION QUI VERIFIE TOUT LES CARACTERE A ECHAPPER DIRECtEMENT
+    while (str[(*i)] && str[(*i)] != ' ' && str[(*i)] != 34)                   /// FAIRE UNE FONCTION QUI VERIFIE TOUT LES CARACTERE A ECHAPPER DIRECTEMENT
         *i = (*i) + 1;
     result = malloc(sizeof(char *) * ((*i) - a + 1));
     if (!result)
@@ -29,7 +29,24 @@ char * dollars_sign(char *str, t_token **token, int *i, t_db_list **info, char *
         *i = (*i) + 1;
     parse_line (str, token, (*i), info, env, quote);
     return (0);
-} 
+}
+
+
+int verification_wildcard(char *str)
+{
+    int i;
+
+    i = 0;
+    while (str[i])
+    {
+        if (str[i] == '*')
+            return (16);
+        i++;
+    }
+    return (1);
+}
+
+
 
 int parse_line (char *str, t_token **token, int i, t_db_list **info, char **env, int quote)
 {
@@ -177,23 +194,6 @@ int parse_line (char *str, t_token **token, int i, t_db_list **info, char **env,
             return (0);   
         }
 
-        if (str[i] == '*' && str[i + 1] != '*')
-        {
-            b = 0;
-            result = malloc(sizeof(char *) * (2));
-            if (!result)
-                perror("MALLOC RESULT PARSING");
-            result[0] = str[i];
-            result[1] = '\0';
-            i++;
-            *token = push_list(*info, *token, result, 16);
-            while (str[i] && str[i] == ' ')
-                i++;
-
-            parse_line (str, token, i, info, env, quote);
-            return (0);   
-        }
-
         if (str[i])
         {
             b = 0;
@@ -212,21 +212,48 @@ int parse_line (char *str, t_token **token, int i, t_db_list **info, char **env,
                     b = 1;
                 }
                 if (str[i] == 39)
+                {
                     i++;
+                    while (str[i] && str[i] != 39)
+                    {
+                        result = ft_strjoin(result, ft_substr(str, i, 1));
+                        i++;
+                    } 
+                    i++;
+                    while (str[i] && str[i] == ' ')
+                        i++;
+                    parse_line (str, token, i, info, env, quote);
+                }
                 if (str[i] == '$' && b == 1)
                     result = ft_strjoin(result, dollars_sign(str, token, &i, info, env, 1));
                 else
                 {
                     if (str[i] == '=')
+                    {
                         utils = 1;
-                    result = ft_strjoin(result, ft_substr(str, i, 1));
-                    i++;
+                        if (str[i + 1] == 34)
+                        {
+                            result = ft_strjoin(result, ft_substr(str, i, 1));
+                            i = i + 2;
+                            while (str[i] != 34)
+                            {
+                                result = ft_strjoin(result, ft_substr(str, i, 1));
+                                i++;
+                                utils = 3;
+                            }
+                        }
+                    }
+                    if (utils < 3)
+                    {
+                        result = ft_strjoin(result, ft_substr(str, i, 1));
+                        i++;
+                    }
                 }
             }
             if (utils == 0)
-                *token = push_list(*info, *token, result, 1);
+                *token = push_list(*info, *token, result, verification_wildcard(result));
 
-            if (utils == 1)
+            if (utils > 0)
             {
                *token = push_list(*info, *token, result, 13);
                 utils = 0;

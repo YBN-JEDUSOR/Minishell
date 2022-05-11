@@ -190,17 +190,22 @@ int ft_grammar(t_token **token)
                 return (0);
         }
 
-        if ((*token)->type == 7 && (!(*token)->next))
+        /*if ((*token)->type == 7 && (!(*token)->next))
         {
                 printf("bash: syntax error near unexpected token `newline'\n");
                 return (0);
-        }
+        }*/
 
-        if ((*token)->type == 8 && (!(*token)->next))
+        // Les deux verification a modifier quaund dimitrie aura termine, 
+        // il faut pouvoir verifier l'existence d'un fichier apres/avant le chevron
+        // le probleme cest que cela mofierait le token et si je change le token maintenant, 
+        // la partie execution est a changer. 
+
+        /*if ((*token)->type == 8 && (!(*token)->next))
         {
                 printf("bash: syntax error near unexpected token `newline'\n");
                 return (0);
-        }
+        }*/
 
         if ((*token)->type == 15 && ((!(*token)->previous) || (!(*token)->next)))
         {
@@ -842,13 +847,7 @@ void	handler(int code)
     {
 	    
     }
-
-
-
-
 }
-
-
 
 
 
@@ -877,6 +876,9 @@ int main(int argc, char *argv[], char *env[])
              
         while (minishell.token)
         {
+
+            printf("token = %s\ntype = %d\n\n", minishell.token->str, minishell.token->type);
+
             if (!(ft_grammar(&minishell.token)))
             {
                 minishell.grammar = -1;
