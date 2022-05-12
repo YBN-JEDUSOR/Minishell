@@ -1,7 +1,5 @@
 #include "minishell.h"
 
-// GERER les >> correctement (e.g creer fichier si existe pas)
-// CHECKER les leaks de la partie exec des que ce sera possible
 // GERER les wildcards
 // GERER les parentheses
 // GERER ./a.out
@@ -835,12 +833,12 @@ void	handler(int code)
 {
     if (code == SIGINT)
     {
-	    //(exit_status à 1 (comportement similaire à celui de Bash)
-        rl_replace_line("", 0); //(vide le buffer de readline)
+	    
+        rl_replace_line("", 0); 
         ft_putendl("");
-        rl_on_new_line(); //(changement de ligne)
-        rl_replace_line("", 0); //(vide le buffer de readline)
-        rl_redisplay(); //(affiche la nouvelle ligne) En gros, on quitte la ligne courante pour afficher un nouveau prompt sur une nouvelle ligne.
+        rl_on_new_line(); 
+        rl_replace_line("", 0);
+        rl_redisplay(); 
     }
 
     if (code == SIGQUIT)
@@ -871,12 +869,16 @@ int main(int argc, char *argv[], char *env[])
 
         parse_line(minishell.line, &minishell.token, 0, &minishell.info, env, 0);
 
+        
+
         while (minishell.token && minishell.token->previous)                 
             minishell.token = minishell.token->previous;
              
+            
         while (minishell.token)
         {
 
+            
             printf("token = %s\ntype = %d\n\n", minishell.token->str, minishell.token->type);
 
             if (!(ft_grammar(&minishell.token)))
@@ -885,9 +887,12 @@ int main(int argc, char *argv[], char *env[])
                 break; 
             }
 
+
             if (minishell.token && minishell.token->type == 14 && minishell.token->next && minishell.token->next->type == 1)
                 minishell.here_doc = here_doc(minishell.token);
- 
+
+            
+    
             add_history(minishell.line);
             
             if (!minishell.token->next)
@@ -895,19 +900,20 @@ int main(int argc, char *argv[], char *env[])
             minishell.token = minishell.token->next;
         }
 
-
+            
 
         if (minishell.grammar > 0)
         {
             while (minishell.token && minishell.token->previous)                 
                 minishell.token = minishell.token->previous;
         
+
             if (minishell.token)
                 if (execute_line(minishell.token, &env, &minishell))
                     return (1);
         }
 
-
+           
 
         if (minishell.token)
             free_list(minishell.token); 

@@ -1,6 +1,6 @@
 #include "minishell.h"
 
-char * dollars_sign(char *str, t_token **token, int *i, t_db_list **info, char **env, int quote)
+char *dollars_sign(char *str, t_token **token, int *i, t_db_list **info, char **env, int quote)
 {
     int b;
     int a;
@@ -31,6 +31,51 @@ char * dollars_sign(char *str, t_token **token, int *i, t_db_list **info, char *
     return (0);
 }
 
+int double_pipe (char *str, t_token **token, int *i, t_db_list **info, char **env, int quote)
+{
+    char *result;
+
+    result = malloc(sizeof(char *) * (2));
+    if (!result)
+        perror("MALLOC RESULT PARSING");
+    result[0] = str[(*i)];
+    result[1] = '\0';
+    (*i)++;
+    *token = push_list(*info, *token, result, 5);
+    while (str[(*i)] && str[(*i)] == ' ')
+        (*i)++;
+    parse_line (str, token, *i, info, env, quote);
+    return (0);
+}
+int in_out_file(char *str, t_token **token, int *i, t_db_list **info, char **env, int quote)
+{
+    char *result;
+    result = malloc(sizeof(char *) * 1);
+    if (!result)
+        return (0);
+    result[0] = '\0';
+    utils = 7;
+    if (str[*i] == '>')
+        utils = 8;
+    (*i)++;
+    while (str[*i] && str[*i] == ' ')
+        (*i)++;
+    while (str[*i] && str[*i] != ' ')
+    {
+        result = ft_strjoin(result, ft_substr(str, *i, 1));
+        (*i)++;
+        if (str[(*i)] == ')')
+            break;
+    }
+    *token = push_list(*info, *token, result, utils);         
+    while (str[*i] && str[*i] == ' ')
+        (*i)++;
+    parse_line (str, token, i, info, env, quote);
+    return (0);
+}
+
+
+
 
 int verification_wildcard(char *str)
 {
@@ -46,8 +91,6 @@ int verification_wildcard(char *str)
     return (1);
 }
 
-
-
 int parse_line (char *str, t_token **token, int i, t_db_list **info, char **env, int quote)
 {
     char                *result; 
@@ -60,56 +103,16 @@ int parse_line (char *str, t_token **token, int i, t_db_list **info, char **env,
     {   
         if (str[i] == '|' && str[i + 1] != '|')
         {
-            b = 0;
-            result = malloc(sizeof(char *) * (2));
-            if (!result)
-                perror("MALLOC RESULT PARSING");
-            result[0] = str[i];
-            result[1] = '\0';
-            i++;
-            *token = push_list(*info, *token, result, 5);
-            while (str[i] && str[i] == ' ')
-                i++;
-            parse_line (str, token, i, info, env, quote);
-            return (0);   
+              double_pipe (str, token, &i, info, env, quote);
         }
         if (str[i] == '$')
         {
             dollars_sign (str, token, &i, info, env, 0);
-            return (0);
         }
 
         if ((str[i] == '<' && str[i + 1] != '<') || (str[i] == '>' && str[i + 1] != '>'))
         {
-            utils = 7;
-            if (str[i] == '>')
-                utils = 8;
-            i++;
-            while (str[i] && str[i] == ' ')
-                i++;
-            b = 0;
-            a = i;
-            while (str[i] && str[i] != ' ')
-            {
-                i++;
-                if (str[i] == ')')
-                    break;
-            }
-            result = malloc(sizeof(char *) * (i - a + 1));
-            if (!result)
-                perror("MALLOC RESULT PARSING");
-            while (a < i)
-            {
-                result[b] = str[a];
-                b++;
-                a++;
-            }
-            result[b] = '\0';
-            *token = push_list(*info, *token, result, utils);         
-            while (str[i] && str[i] == ' ')
-                i++;
-            parse_line (str, token, i, info, env, quote);
-            return (0);
+            in_out_file(str, token, &i, info, env, 0);
         }
 
         if (str[i] == '(' || str[i] == ')')
