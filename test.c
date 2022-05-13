@@ -12,72 +12,58 @@
 #include <errno.h>
 
 
-int fonction();
-
-
-void handler(int theSignal)
+size_t	ft_strlen(const char *s)
 {
+	size_t	len;
 
-  pid_t pid;
+	len = 0;
+	while (s[len])
+		len++;
+	return (len);
+}
 
-  printf("\n");
-  
+char	*ft_strdup(const char *s)
+{
+	char	*new_s;
+	int		i;
+
+	new_s = malloc(ft_strlen(s) * sizeof(char) + 1);
+	if (!new_s)
+		return (NULL);
+	i = 0;
+	while (s[i])
+	{
+		new_s[i] = s[i];
+		i++;
+	}
+	new_s[i] = '\0';
+	return (new_s);
+}
+
+int main(int argc, char *argv[], char *env[])
+{
+  char  *file;
+  char  **args;
+  int pid;
+
   pid = fork();
-
-  if(!pid)
+  if (!pid)
   {
-    printf("child = %d\n", pid);
-    printf("4\n");
-    fonction();
-    printf("5\n");
+    file = ft_strdup("/usr/bin/lss");
+    args = malloc(sizeof(char *) * (4));
+    args[0] = file;
+    args[1] = "-l";
+    args[2] = "-a";
+    args[3] = NULL;
+    execve(args[0], args, env);
+    free(args[0]);
+    free(args);
+    exit(1);
   }
+  int *testptr;
 
-  if(pid)
-  { 
-    printf("4 bis\n");
-    printf("parent = %d\n", pid);
-    wait(0);
-    exit(0);
-  }
+  testptr = NULL;
+  printf("testptr: %p\n", testptr);
 
-}
-
-
-int fonction()
-{ 
-  char *str;
-
-  printf("1\n");
-  
-  struct sigaction prepaSignal;
-
-  printf("2\n");
-  
-  prepaSignal.sa_handler=&handler;
-
-  printf("3\n");
-  
-  sigaction(SIGINT,&prepaSignal,0);
-
-  printf("6\n");
-  
-  
-  while (1)
-  {
-    ;
-  }
-
-  printf("7\n");
-
-  return 1;
-}
-
-
-
-
-int main(void)
-{
-  fonction();
-
-  return (1);
+  return (0);
 }

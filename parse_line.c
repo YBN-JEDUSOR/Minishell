@@ -1,6 +1,6 @@
 #include "minishell.h"
 
-char *dollars_sign(char *str, t_token **token, int *i, t_db_list **info, char **env, int quote)
+char * dollars_sign(char *str, t_token **token, int *i, t_db_list **info, char **env, int quote)
 {
     int b;
     int a;
@@ -10,7 +10,7 @@ char *dollars_sign(char *str, t_token **token, int *i, t_db_list **info, char **
     *i = (*i) + 1;
     a = (*i);
             
-    while (str[(*i)] && str[(*i)] != ' ' && str[(*i)] != 34)                   /// FAIRE UNE FONCTION QUI VERIFIE TOUT LES CARACTERE A ECHAPPER DIRECTEMENT
+    while (str[(*i)] && str[(*i)] != ' ' && str[(*i)] != 34)                   /// FAIRE UNE FOCNtION QUI VERIFIE TOUT LES CARACTERE A ECHAPPER DIRECtEMENT
         *i = (*i) + 1;
     result = malloc(sizeof(char *) * ((*i) - a + 1));
     if (!result)
@@ -29,67 +29,7 @@ char *dollars_sign(char *str, t_token **token, int *i, t_db_list **info, char **
         *i = (*i) + 1;
     parse_line (str, token, (*i), info, env, quote);
     return (0);
-}
-
-int double_pipe (char *str, t_token **token, int *i, t_db_list **info, char **env, int quote)
-{
-    char *result;
-
-    result = malloc(sizeof(char *) * (2));
-    if (!result)
-        perror("MALLOC RESULT PARSING");
-    result[0] = str[(*i)];
-    result[1] = '\0';
-    (*i)++;
-    *token = push_list(*info, *token, result, 5);
-    while (str[(*i)] && str[(*i)] == ' ')
-        (*i)++;
-    parse_line (str, token, *i, info, env, quote);
-    return (0);
-}
-int in_out_file(char *str, t_token **token, int *i, t_db_list **info, char **env, int quote)
-{
-    char *result;
-    result = malloc(sizeof(char *) * 1);
-    if (!result)
-        return (0);
-    result[0] = '\0';
-    utils = 7;
-    if (str[*i] == '>')
-        utils = 8;
-    (*i)++;
-    while (str[*i] && str[*i] == ' ')
-        (*i)++;
-    while (str[*i] && str[*i] != ' ')
-    {
-        result = ft_strjoin(result, ft_substr(str, *i, 1));
-        (*i)++;
-        if (str[(*i)] == ')')
-            break;
-    }
-    *token = push_list(*info, *token, result, utils);         
-    while (str[*i] && str[*i] == ' ')
-        (*i)++;
-    parse_line (str, token, i, info, env, quote);
-    return (0);
-}
-
-
-
-
-int verification_wildcard(char *str)
-{
-    int i;
-
-    i = 0;
-    while (str[i])
-    {
-        if (str[i] == '*')
-            return (16);
-        i++;
-    }
-    return (1);
-}
+} 
 
 int parse_line (char *str, t_token **token, int i, t_db_list **info, char **env, int quote)
 {
@@ -103,16 +43,56 @@ int parse_line (char *str, t_token **token, int i, t_db_list **info, char **env,
     {   
         if (str[i] == '|' && str[i + 1] != '|')
         {
-              double_pipe (str, token, &i, info, env, quote);
+            b = 0;
+            result = malloc(sizeof(char *) * (2));
+            if (!result)
+                perror("MALLOC RESULT PARSING");
+            result[0] = str[i];
+            result[1] = '\0';
+            i++;
+            *token = push_list(*info, *token, result, 5);
+            while (str[i] && str[i] == ' ')
+                i++;
+            parse_line (str, token, i, info, env, quote);
+            return (0);   
         }
         if (str[i] == '$')
         {
             dollars_sign (str, token, &i, info, env, 0);
+            return (0);
         }
 
         if ((str[i] == '<' && str[i + 1] != '<') || (str[i] == '>' && str[i + 1] != '>'))
         {
-            in_out_file(str, token, &i, info, env, 0);
+            utils = 7;
+            if (str[i] == '>')
+                utils = 8;
+            i++;
+            while (str[i] && str[i] == ' ')
+                i++;
+            b = 0;
+            a = i;
+            while (str[i] && str[i] != ' ')
+            {
+                i++;
+                if (str[i] == ')')
+                    break;
+            }
+            result = malloc(sizeof(char *) * (i - a + 1));
+            if (!result)
+                perror("MALLOC RESULT PARSING");
+            while (a < i)
+            {
+                result[b] = str[a];
+                b++;
+                a++;
+            }
+            result[b] = '\0';
+            *token = push_list(*info, *token, result, utils);         
+            while (str[i] && str[i] == ' ')
+                i++;
+            parse_line (str, token, i, info, env, quote);
+            return (0);
         }
 
         if (str[i] == '(' || str[i] == ')')
@@ -197,6 +177,23 @@ int parse_line (char *str, t_token **token, int i, t_db_list **info, char **env,
             return (0);   
         }
 
+        if (str[i] == '*' && str[i + 1] != '*')
+        {
+            b = 0;
+            result = malloc(sizeof(char *) * (2));
+            if (!result)
+                perror("MALLOC RESULT PARSING");
+            result[0] = str[i];
+            result[1] = '\0';
+            i++;
+            *token = push_list(*info, *token, result, 16);
+            while (str[i] && str[i] == ' ')
+                i++;
+
+            parse_line (str, token, i, info, env, quote);
+            return (0);   
+        }
+
         if (str[i])
         {
             b = 0;
@@ -215,48 +212,21 @@ int parse_line (char *str, t_token **token, int i, t_db_list **info, char **env,
                     b = 1;
                 }
                 if (str[i] == 39)
-                {
                     i++;
-                    while (str[i] && str[i] != 39)
-                    {
-                        result = ft_strjoin(result, ft_substr(str, i, 1));
-                        i++;
-                    } 
-                    i++;
-                    while (str[i] && str[i] == ' ')
-                        i++;
-                    parse_line (str, token, i, info, env, quote);
-                }
                 if (str[i] == '$' && b == 1)
                     result = ft_strjoin(result, dollars_sign(str, token, &i, info, env, 1));
                 else
                 {
                     if (str[i] == '=')
-                    {
                         utils = 1;
-                        if (str[i + 1] == 34)
-                        {
-                            result = ft_strjoin(result, ft_substr(str, i, 1));
-                            i = i + 2;
-                            while (str[i] != 34)
-                            {
-                                result = ft_strjoin(result, ft_substr(str, i, 1));
-                                i++;
-                                utils = 3;
-                            }
-                        }
-                    }
-                    if (utils < 3)
-                    {
-                        result = ft_strjoin(result, ft_substr(str, i, 1));
-                        i++;
-                    }
+                    result = ft_strjoin(result, ft_substr(str, i, 1));
+                    i++;
                 }
             }
             if (utils == 0)
-                *token = push_list(*info, *token, result, verification_wildcard(result));
+                *token = push_list(*info, *token, result, 1);
 
-            if (utils > 0)
+            if (utils == 1)
             {
                *token = push_list(*info, *token, result, 13);
                 utils = 0;
@@ -271,36 +241,63 @@ int parse_line (char *str, t_token **token, int i, t_db_list **info, char **env,
 }
 
 
-int here_doc(t_token *token)
+t_token **here_doc(t_token *token)
 {
-    
-    int     pid;
     char    *str;
-    int     fd;
-    int     *test;
-    struct stat    *stat;
+    int     size;
+    int     i;
+    t_token **here_doc;
 
-    // if access int fd ... eviter d'avoir un fichier ouvert
+    
+    size = 0;
+    i = 0;
+    while (token->previous)                 
+    {
+        if (token && token->type == 14 && token->next && token->next->type == 1)
+            size++;
+        token = token->previous;
+    }
 
-    fd = open("./temp",  O_TRUNC | O_CREAT | O_RDWR, 0000644);
+    here_doc = malloc(sizeof(t_token*) * size + 1);
+    if (!here_doc)
+        return (0);
+    here_doc[size] = '\0';
+
+    while (token && token->next)                 
+    {
+        if (token && token->type == 14 && token->next && token->next->type == 1)
+        {
+            here_doc[i] = put_here_doc(token);
+            i++;
+        }
+        token = token->next;
+    }
+
+    return (here_doc);
+}
+
+t_token *put_here_doc(t_token *token)
+{
+    char    *str;
+
+    t_token     *result;
+    t_db_list   *info;
+    result = NULL;
+    info = init_list(info);
 
     str = readline("> ");
     while (strcmp(str, token->next->str))
     {
-        write(fd, str, strlen(str));
-        write(fd, "\n", 1);
+        result = push_list(info, result, ft_strjoin(str, "\n"), 1);
         str = readline("> ");
     }
 
-    
+    while (result && result->previous)                 
+        result = result->previous;
 
-    return (fd);
+    return (result);
 }
-
-
-            
-            
-            
+    
 
 
 

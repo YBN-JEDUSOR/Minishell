@@ -64,10 +64,11 @@ typedef struct s_pipe_exec
   int   input;
   int   output;
   int   pipe_fd[2];
+  int   first_cmd;
   char  *cmd;
   char  *path;
   char  *bin;
-  char  **newargs;
+  char  **args;
   char  ***env;
   int   status;
   int   here_doc;
@@ -80,9 +81,10 @@ typedef struct s_minishell
   t_token     *token;
   t_db_list   *info;
   t_extension *extension;
-  char        **env;
-  int         here_doc;
+  char        ***env;
   int         grammar;
+  int         here_doc;
+  t_token     **here_doc_tab;
 } t_minishell;
 
 
@@ -97,4 +99,5 @@ t_extension *set_extension(char *str, t_extension *extension);
 char	*ft_strjoin(char const *s1, char const *s2);
 char	*ft_substr(char const *s, unsigned int start, size_t len);
 size_t	ft_strlen(const char *s);
-int here_doc(t_token *token);
+t_token **here_doc(t_token *token);
+t_token *put_here_doc(t_token *token);
