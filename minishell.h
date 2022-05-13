@@ -6,7 +6,7 @@
 /*   By: rlanani <rlanani@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/14 16:34:47 by rlanani           #+#    #+#             */
-/*   Updated: 2022/04/30 16:36:44 by rlanani          ###   ########.fr       */
+/*   Updated: 2022/05/13 16:59:16 by rlanani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,3 +101,4 @@ char	*ft_substr(char const *s, unsigned int start, size_t len);
 size_t	ft_strlen(const char *s);
 t_token **here_doc(t_token *token);
 t_token *put_here_doc(t_token *token);
+void print_here_doc(t_token **token);

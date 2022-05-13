@@ -978,10 +978,6 @@ void	handler(int code)
     {
 	    
     }
-
-
-
-
 }
 
 
@@ -1019,6 +1015,8 @@ int main(int argc, char *argv[], char *env[])
                 minishell.grammar = -1;
                 break; 
             }*/
+            
+            //printf("token = %s\ntype = %d\n\n", minishell.token->str, minishell.token->type);
  
             add_history(minishell.line);
             
@@ -1027,7 +1025,11 @@ int main(int argc, char *argv[], char *env[])
             minishell.token = minishell.token->next;
         }
 
-        minishell.here_doc_tab = here_doc(minishell.token);
+        if (minishell.token)
+        {
+            minishell.here_doc_tab = here_doc(minishell.token);
+            //print_here_doc(minishell.here_doc_tab); simple fonction pour verifier
+        }
 
         if (minishell.grammar > 0)
         {
