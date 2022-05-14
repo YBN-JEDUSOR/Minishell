@@ -1016,7 +1016,7 @@ int main(int argc, char *argv[], char *env[])
                 break; 
             }*/
             
-            //printf("token = %s\ntype = %d\n\n", minishell.token->str, minishell.token->type);
+            printf("token = %s\ntype = %d\n\n", minishell.token->str, minishell.token->type);
  
             add_history(minishell.line);
             
@@ -1040,8 +1040,6 @@ int main(int argc, char *argv[], char *env[])
                 if (execute_line(&minishell))
                     return (1);
         }
-
-
 
         if (minishell.token)
             free_list(minishell.token); 

@@ -1,7 +1,7 @@
 #include "minishell.h"
 
 
-int is_token(char c)
+int not_token(char c)
 {
     if (c == ' ' || c == '|' || c == '<' || c == '(' || c == ')' || c == '&' || c == '>')
         return (0);
@@ -18,7 +18,7 @@ char * dollars_sign(char *str, t_token **token, int *i, t_db_list **info, char *
     *i = (*i) + 1;
     a = (*i);
             
-    while (str[(*i)] && str[(*i)] != ' ' && str[(*i)] != 34 && is_token(str[(*i)]))
+    while (str[(*i)] && str[(*i)] != ' ' && str[(*i)] != 34 && not_token(str[(*i)]))
         *i = (*i) + 1;
     result = malloc(sizeof(char *) * ((*i) - a + 1));
     if (!result)
@@ -53,7 +53,7 @@ int simple_pipe(char *str, t_token **token, int *i, t_db_list **info, char **env
     while (str[*i] && str[*i] == ' ')
         (*i)++;
     parse_line (str, token, *i, info, env, quote);
-    return (0);
+    return (1);
 }
 
 int parenthese(char *str, t_token **token, int *i, t_db_list **info, char **env, int quote)
@@ -74,7 +74,7 @@ int parenthese(char *str, t_token **token, int *i, t_db_list **info, char **env,
     while (str[*i] && str[*i] == ' ')
         (*i)++;
     parse_line (str, token, *i, info, env, quote);
-    return (0);
+    return (1);
 }
 
 int double_operator (char *str, t_token **token, int *i, t_db_list **info, char **env, int quote, int type)
@@ -92,7 +92,37 @@ int double_operator (char *str, t_token **token, int *i, t_db_list **info, char 
     while (str[*i] && str[*i] == ' ')
         (*i)++;
     parse_line (str, token, *i, info, env, quote);
-    return (0);
+    return (1);
+}
+
+int is_infile_or_outfile (char *str, t_token **token, int *i, t_db_list **info, char **env, int quote)
+{
+    char *result;
+    int utils;
+
+    utils = 7;
+    if (str[(*i)] == '>')
+        utils = 8;
+    result = malloc(sizeof(char *) * (1));
+    if (!result)
+        perror("MALLOC RESULT PARSING");
+    result[0] = '\0';
+    (*i)++;
+    while (str[(*i)] && (str[(*i)] == ' ' || str[(*i)] == 34 || str[(*i)] == 39))
+        (*i)++;
+    while (str[(*i)] && str[(*i)] != ' ' && str[(*i)] != ')')
+    {
+        if (str[(*i)] != 34 && str[(*i)] != 39)
+            result = ft_strjoin(result, ft_substr(str, (*i), 1));
+        (*i)++;
+    }
+    if (!result[0])
+        printf("bash4: syntax error near unexpected token `newline'\n");
+    *token = push_list(*info, *token, result, utils);         
+    while (str[(*i)] && str[(*i)] == ' ')
+        (*i)++;
+    parse_line (str, token, *i, info, env, quote);
+    return (1);
 }
 
 
@@ -111,135 +141,89 @@ int is_wildcard(char *str)
     return (1);
 }
 
+int regularstr(char *str, t_token **token, int *i, t_db_list **info, char **env, int quote)
+{
+    char *result;
+    int b = 0;
+    int utils = 0;
+    
+    result = malloc(sizeof(char *) * (1));
+    if (!result)
+        perror("MALLOC RESULT PARSING");
+    result[0] = '\0';
+    while (str[(*i)] && not_token(str[(*i)]))
+    {
+        if (str[(*i)] == 34)
+        {
+            (*i)++;
+            b = 1;
+        }
+        if (str[(*i)] == 39)
+            (*i)++;
+        if (str[(*i)] == '$' && b == 1)
+            result = ft_strjoin(result, dollars_sign(str, token, i, info, env, 1));
+        else
+        {
+            if (str[(*i)] == '=')
+                utils = 1;
+            result = ft_strjoin(result, ft_substr(str, (*i), 1));
+            (*i)++;
+        }
+    }
+    if (utils == 0)
+        *token = push_list(*info, *token, result, is_wildcard(str));
+    if (utils == 1)
+    {
+       *token = push_list(*info, *token, result, 13);
+        utils = 0;
+    }
+    while (str[(*i)] && str[(*i)] == ' ')
+        (*i)++;
+    parse_line (str, token, *i, info, env, quote);
+    return (1);
+}
+
 
 
 int parse_line (char *str, t_token **token, int i, t_db_list **info, char **env, int quote)
 {
-    char                *result; 
-    int                 a;
-    int                 b;
-    int                 utils;
-
-    utils = 0;
     while (str[i])
     {   
         if (str[i] == '|' && str[i + 1] != '|')
-        {
-            simple_pipe(str, token, &i, info, env, quote);
-            return (0);   
-        }
-        
+            if (simple_pipe(str, token, &i, info, env, quote))
+                return (1);
+              
         if (str[i] == '$')
-        {
-            dollars_sign (str, token, &i, info, env, 0);
-            return (0);
-        }
+            if (!dollars_sign (str, token, &i, info, env, 0))
+                return (1);
 
-        if ((str[i] == '<' && str[i + 1] != '<') || (str[i] == '>' && str[i + 1] != '>'))     // voir pou la grammaie fonctionneme tet optimisation
-        {
-            utils = 7;
-            if (str[i] == '>')
-                utils = 8;
-            i++;
-            while (str[i] && str[i] == ' ')
-                i++;
-            b = 0;
-            a = i;
-            while (str[i] && str[i] != ' ')
-            {
-                i++;
-                if (str[i] == ')')
-                    break;
-            }
-            result = malloc(sizeof(char *) * (i - a + 1));
-            if (!result)
-                perror("MALLOC RESULT PARSING");
-            while (a < i)
-            {
-                result[b] = str[a];
-                b++;
-                a++;
-            }
-            result[b] = '\0';
-            *token = push_list(*info, *token, result, utils);         
-            while (str[i] && str[i] == ' ')
-                i++;
-            parse_line (str, token, i, info, env, quote);
-            return (0);
-        }
+        if ((str[i] == '<' && str[i + 1] != '<') || (str[i] == '>' && str[i + 1] != '>'))
+            if (is_infile_or_outfile (str, token, &i, info, env, quote))
+                return (1);
 
         if (str[i] == '(' || str[i] == ')')
-        {
-            parenthese(str, token, &i, info, env, quote);
-            return (0);
-        }
+            if (parenthese(str, token, &i, info, env, quote))
+                return (1);
 
         if (str[i] == '&' && str[i + 1] == '&')
-        {
-            double_operator (str, token, &i, info, env, quote, 9);
-            return (0);   
-        }
+            if (double_operator (str, token, &i, info, env, quote, 9))
+                return (1);   
 
         if (str[i] == '|' && str[i + 1] == '|')
-        {
-            double_operator (str, token, &i, info, env, quote, 10);
-            return (0);   
-        }
+            if (double_operator (str, token, &i, info, env, quote, 10))
+                return (1);   
         
         if (str[i] == '<' && str[i + 1] == '<')
-        {
-            double_operator (str, token, &i, info, env, quote, 14);
-            return (0);   
-        }
+            if (double_operator (str, token, &i, info, env, quote, 14))
+                return (1);   
 
         if (str[i] == '>' && str[i + 1] == '>')
-        {
-            double_operator (str, token, &i, info, env, quote, 15);
-            return (0);
-        }
+            if (double_operator (str, token, &i, info, env, quote, 15))
+                return (1);
 
         if (str[i])
-        {
-            b = 0;
-            a = i;
-
-            result = malloc(sizeof(char *) * (1));
-            if (!result)
-                perror("MALLOC RESULT PARSING");
-            result[0] = '\0';
-
-            while (str[i] && is_token(str[i]))
-            {
-                if (str[i] == 34)
-                {
-                    i++;
-                    b = 1;
-                }
-                if (str[i] == 39)
-                    i++;
-                if (str[i] == '$' && b == 1)
-                    result = ft_strjoin(result, dollars_sign(str, token, &i, info, env, 1));
-                else
-                {
-                    if (str[i] == '=')
-                        utils = 1;
-                    result = ft_strjoin(result, ft_substr(str, i, 1));
-                    i++;
-                }
-            }
-            if (utils == 0)
-                *token = push_list(*info, *token, result, is_wildcard(str));
-
-            if (utils == 1)
-            {
-               *token = push_list(*info, *token, result, 13);
-                utils = 0;
-            }
-            while (str[i] && str[i] == ' ')
-                i++;
-            parse_line (str, token, i, info, env, quote);
-            return (0);
-        }
+            if (regularstr(str, token, &i, info, env, quote))
+                return (1);
     }
     return (1);
 }
@@ -302,7 +286,7 @@ t_token *put_here_doc(t_token *token)
     return (result);
 }
 
-void print_here_doc(t_token **token)  //Sert a rien a part veirifier le bon fonctionement
+void print_here_doc(t_token **token)  //Sert a rien a part veirifier le bon fonctionement du here doc
 {
     int i = 0;
 
