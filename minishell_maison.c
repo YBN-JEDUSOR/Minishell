@@ -123,11 +123,12 @@ void free_list(t_token *token)
 {
     t_token *temp;
 
-    while (token)
+    while (token && token->previous)
     {
         temp = token;
         free(temp);
         token = token->previous;
+        
     }
 }
 
@@ -959,6 +960,7 @@ t_db_list *init_minishell(t_minishell *minishell, char **env[])
     minishell->info = init_list(minishell->info);
     minishell->grammar = 1;
     minishell->here_doc = -1;
+    minishell->quote = 0;
     return (minishell->info);
 }
 
@@ -997,16 +999,12 @@ int main(int argc, char *argv[], char *env[])
     minishell.line = readline("minishell$ ");
     prepaSignal.sa_handler=SIG_IGN;
 
-
-
     while (minishell.line)
     {
+        parse_line(&minishell, 0);
 
-        parse_line(minishell.line, &minishell.token, 0, &minishell.info, env, 0);
+        minishell.token = minishell.info->first;
 
-        while (minishell.token && minishell.token->previous)                 
-            minishell.token = minishell.token->previous;
-             
         while (minishell.token)
         {
             /*if (!(ft_grammar(&minishell.token)))
@@ -1016,37 +1014,49 @@ int main(int argc, char *argv[], char *env[])
                 break; 
             }*/
             
-            printf("token = %s\ntype = %d\n\n", minishell.token->str, minishell.token->type);
- 
+            //printf("token = %s\ntype = %d\n\n", minishell.token->str, minishell.token->type);
+
             add_history(minishell.line);
             
-            if (!minishell.token->next)
-                break;
             minishell.token = minishell.token->next;
+
         }
+
+        minishell.token = minishell.info->first;
 
         if (minishell.token)
         {
-            minishell.here_doc_tab = here_doc(minishell.token);
-            //print_here_doc(minishell.here_doc_tab); simple fonction pour verifier
+            minishell.here_doc_tab = here_doc(minishell.token, minishell.info->first);
+            print_here_doc(minishell.here_doc_tab);  //simple fonction pour afficher
         }
 
-        if (minishell.grammar > 0)
+        if (minishell.grammar > 0 && ft_strlen(minishell.line))
         {
             while (minishell.token && minishell.token->previous)                 
                 minishell.token = minishell.token->previous;
-        
+
             if (minishell.token)
                 if (execute_line(&minishell))
                     return (1);
         }
 
-        if (minishell.token)
-            free_list(minishell.token); 
+        
+
+        
+        
+
+        ////////////////////////////////////// Reboot de la line et liberation des structures////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+
+        if (ft_strlen(minishell.line))
+            free_list(minishell.token);
+
+        free(minishell.info);
+
         minishell.info = init_list(minishell.info);
+        
         free(minishell.line);
-
-
 
         prepaSignal.sa_handler=&handler;
         minishell.line = readline("minishell$ ");

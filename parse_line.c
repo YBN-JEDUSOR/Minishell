@@ -8,7 +8,7 @@ int not_token(char c)
     return (1);
 }
 
-char * dollars_sign(char *str, t_token **token, int *i, t_db_list **info, char **env, int quote)
+char * dollars_sign(t_minishell *minishell, int *i)
 {
     int b;
     int a;
@@ -18,110 +18,110 @@ char * dollars_sign(char *str, t_token **token, int *i, t_db_list **info, char *
     *i = (*i) + 1;
     a = (*i);
             
-    while (str[(*i)] && str[(*i)] != ' ' && str[(*i)] != 34 && not_token(str[(*i)]))
+    while (minishell->line[(*i)] && minishell->line[(*i)] != ' ' && minishell->line[(*i)] != 34 && not_token(minishell->line[(*i)]))
         *i = (*i) + 1;
     result = malloc(sizeof(char *) * ((*i) - a + 1));
     if (!result)
         perror("MALLOC RESULT PARSING");
     while (a < (*i))
     {
-        result[b] = str[a];
+        result[b] = minishell->line[a];
         b++;
         a++;
     }
     result[b] = '\0';
-    if (quote == 1)
-        return (check_extension(result, env));
-    *token = push_list(*info, *token, check_extension(result, env), 2);
-    while (str[(*i)] && str[(*i)] == ' ')
+    if (minishell->quote == 1)
+        return (check_extension(result, *minishell->env));
+    minishell->token = push_list(minishell->info, minishell->token, check_extension(result, *minishell->env), 2);
+    while (minishell->line[(*i)] && minishell->line[(*i)] == ' ')
         *i = (*i) + 1;
-    parse_line (str, token, (*i), info, env, quote);
+    parse_line (minishell, (*i));
     return (0);
 }
 
-int simple_pipe(char *str, t_token **token, int *i, t_db_list **info, char **env, int quote)
+int simple_pipe(t_minishell *minishell, int *i)
 {
     char *result;
 
     result = malloc(sizeof(char *) * (2));
     if (!result)
         perror("MALLOC RESULT PARSING");
-    result[0] = str[*i];
+    result[0] = minishell->line[*i];
     result[1] = '\0';
     (*i)++;
-    *token = push_list(*info, *token, result, 5);
-    while (str[*i] && str[*i] == ' ')
+    minishell->token = push_list(minishell->info,  minishell->token, result, 5);
+    while (minishell->line[*i] && minishell->line[*i] == ' ')
         (*i)++;
-    parse_line (str, token, *i, info, env, quote);
+    parse_line (minishell, (*i));
     return (1);
 }
 
-int parenthese(char *str, t_token **token, int *i, t_db_list **info, char **env, int quote)
+int parenthese(t_minishell *minishell, int *i)
 {
     int utils;
     char *result;
 
     utils = 11;
-    if (str[*i] == ')')
+    if (minishell->line[*i] == ')')
         utils = 12;
     result = malloc(sizeof(char *) * (2));
     if (!result)
         perror("MALLOC RESULT PARSING");
-    result[0] = str[*i];
+    result[0] = minishell->line[*i];
     result[1] = '\0';
     (*i)++;
-    *token = push_list(*info, *token, result, utils);         
-    while (str[*i] && str[*i] == ' ')
+     minishell->token = push_list(minishell->info, minishell->token, result, utils);         
+    while (minishell->line[*i] && minishell->line[*i] == ' ')
         (*i)++;
-    parse_line (str, token, *i, info, env, quote);
+    parse_line (minishell, (*i));
     return (1);
 }
 
-int double_operator (char *str, t_token **token, int *i, t_db_list **info, char **env, int quote, int type)
+int double_operator (t_minishell *minishell, int *i, int type)
 {
     char *result;
 
     result = malloc(sizeof(char *) * (3));
     if (!result)
         perror("MALLOC RESULT PARSING");
-    result[0] = str[*i];
-    result[1] = str[*i];
+    result[0] = minishell->line[*i];
+    result[1] = minishell->line[*i];
     result[2] = '\0';
     (*i) = (*i) + 2;
-    *token = push_list(*info, *token, result, type);;
-    while (str[*i] && str[*i] == ' ')
+    minishell->token = push_list(minishell->info,  minishell->token, result, type);;
+    while (minishell->line[*i] && minishell->line[*i] == ' ')
         (*i)++;
-    parse_line (str, token, *i, info, env, quote);
+    parse_line (minishell, (*i));
     return (1);
 }
 
-int is_infile_or_outfile (char *str, t_token **token, int *i, t_db_list **info, char **env, int quote)
+int is_infile_or_outfile (t_minishell *minishell, int *i)
 {
     char *result;
     int utils;
 
     utils = 7;
-    if (str[(*i)] == '>')
+    if (minishell->line[(*i)] == '>')
         utils = 8;
     result = malloc(sizeof(char *) * (1));
     if (!result)
         perror("MALLOC RESULT PARSING");
     result[0] = '\0';
     (*i)++;
-    while (str[(*i)] && (str[(*i)] == ' ' || str[(*i)] == 34 || str[(*i)] == 39))
+    while (minishell->line[(*i)] && (minishell->line[(*i)] == ' ' || minishell->line[(*i)] == 34 || minishell->line[(*i)] == 39))
         (*i)++;
-    while (str[(*i)] && str[(*i)] != ' ' && str[(*i)] != ')')
+    while (minishell->line[(*i)] && minishell->line[(*i)] != ' ' && minishell->line[(*i)] != ')')
     {
-        if (str[(*i)] != 34 && str[(*i)] != 39)
-            result = ft_strjoin(result, ft_substr(str, (*i), 1));
+        if (minishell->line[(*i)] != 34 && minishell->line[(*i)] != 39)
+            result = ft_strjoin(result, ft_substr(minishell->line, (*i), 1));
         (*i)++;
     }
     if (!result[0])
-        printf("bash4: syntax error near unexpected token `newline'\n");
-    *token = push_list(*info, *token, result, utils);         
-    while (str[(*i)] && str[(*i)] == ' ')
+        //printf("bash: syntax error near unexpected token `newline'\n");
+    minishell->token = push_list(minishell->info, minishell->token, result, utils);         
+    while (minishell->line[(*i)] && minishell->line[(*i)] == ' ')
         (*i)++;
-    parse_line (str, token, *i, info, env, quote);
+    parse_line (minishell, (*i));
     return (1);
 }
 
@@ -137,121 +137,165 @@ int is_wildcard(char *str)
             return (16);
         i++;
     }
-    i = 0;
     return (1);
 }
 
-int regularstr(char *str, t_token **token, int *i, t_db_list **info, char **env, int quote)
+int regularstr(t_minishell *minishell, int *i)
 {
     char *result;
     int b = 0;
     int utils = 0;
     
+    //printf("1\n");
+
     result = malloc(sizeof(char *) * (1));
     if (!result)
         perror("MALLOC RESULT PARSING");
     result[0] = '\0';
-    while (str[(*i)] && not_token(str[(*i)]))
+
+    //printf("2\n");
+
+
+    while (minishell->line[(*i)] && minishell->line[(*i)] != ' ')
     {
-        if (str[(*i)] == 34)
+        if (!not_token(minishell->line[(*i)] && minishell->quote == 0))
         {
+            //printf("3\n");
+            break;
+        }
+
+        if (minishell->line[(*i)] == 34)
+        {
+            //printf("4\n");
+            if (minishell->quote == 1)
+            {
+                minishell->quote = 0;
+                (*i)++;
+                b = 1;
+                break;
+            }
+            if (minishell->quote == 0)
+                minishell->quote = 1;
             (*i)++;
             b = 1;
         }
-        if (str[(*i)] == 39)
+        if (minishell->line[(*i)] == 39)
+        {
+            //printf("5\n");
+            if (minishell->quote == 2)
+                minishell->quote = 0;
+            if (minishell->quote == 0)
+                minishell->quote = 2;
             (*i)++;
-        if (str[(*i)] == '$' && b == 1)
-            result = ft_strjoin(result, dollars_sign(str, token, i, info, env, 1));
+        }
+        if (minishell->line[(*i)] == '$' && b == 1)
+            result = ft_strjoin(result, dollars_sign(minishell, i));
         else
         {
-            if (str[(*i)] == '=')
+            if (minishell->line[(*i)] == '=')                                                              //Extension de variable token contenant "=";
                 utils = 1;
-            result = ft_strjoin(result, ft_substr(str, (*i), 1));
+
+            //printf("6\n");
+            result = ft_strjoin(result, ft_substr(minishell->line, (*i), 1));                              //Token classique
             (*i)++;
         }
     }
-    if (utils == 0)
-        *token = push_list(*info, *token, result, is_wildcard(str));
     if (utils == 1)
     {
-       *token = push_list(*info, *token, result, 13);
+        minishell->token = push_list(minishell->info, minishell->token, result, 13);                      //Extansion de variable token contenant "=";
         utils = 0;
+        //printf("7\n");
     }
-    while (str[(*i)] && str[(*i)] == ' ')
+
+    if (utils == 0)
+    {
+        //printf("8\n");
+        ////printf("result 8 =%s", result);
+        minishell->token = push_list(minishell->info, minishell->token, result, is_wildcard(result));    //Token classique 
+    }
+
+    while (minishell->line[(*i)] && minishell->line[(*i)] == ' ')
+    {
+        //printf("9\n");
         (*i)++;
-    parse_line (str, token, *i, info, env, quote);
+    }
+    parse_line (minishell, (*i));
     return (1);
 }
 
-
-
-int parse_line (char *str, t_token **token, int i, t_db_list **info, char **env, int quote)
+int parse_line (t_minishell *minishell, int i)
 {
-    while (str[i])
+    while (minishell->line[i])
     {   
-        if (str[i] == '|' && str[i + 1] != '|')
-            if (simple_pipe(str, token, &i, info, env, quote))
-                return (1);
-              
-        if (str[i] == '$')
-            if (!dollars_sign (str, token, &i, info, env, 0))
-                return (1);
+        if (minishell->quote == 0)
+        {
+            if (minishell->line[i] == '|' && minishell->line[i + 1] != '|')
+                if (simple_pipe(minishell, &i))
+                    return (1);
 
-        if ((str[i] == '<' && str[i + 1] != '<') || (str[i] == '>' && str[i + 1] != '>'))
-            if (is_infile_or_outfile (str, token, &i, info, env, quote))
-                return (1);
+            if (minishell->line[i] == '$')
+                if (!dollars_sign (minishell, &i))
+                    return (1);
 
-        if (str[i] == '(' || str[i] == ')')
-            if (parenthese(str, token, &i, info, env, quote))
-                return (1);
+            if ((minishell->line[i] == '<' && minishell->line[i + 1] != '<') || (minishell->line[i] == '>' && minishell->line[i + 1] != '>'))
+                if (is_infile_or_outfile (minishell, &i))
+                    return (1);
 
-        if (str[i] == '&' && str[i + 1] == '&')
-            if (double_operator (str, token, &i, info, env, quote, 9))
-                return (1);   
+            if (minishell->line[i] == '(' || minishell->line[i] == ')')
+                if (parenthese(minishell, &i))
+                    return (1);
 
-        if (str[i] == '|' && str[i + 1] == '|')
-            if (double_operator (str, token, &i, info, env, quote, 10))
-                return (1);   
-        
-        if (str[i] == '<' && str[i + 1] == '<')
-            if (double_operator (str, token, &i, info, env, quote, 14))
-                return (1);   
+            if (minishell->line[i] == '&' && minishell->line[i + 1] == '&')
+                if (double_operator (minishell, &i, 9))
+                    return (1);   
 
-        if (str[i] == '>' && str[i + 1] == '>')
-            if (double_operator (str, token, &i, info, env, quote, 15))
-                return (1);
+            if (minishell->line[i] == '|' && minishell->line[i + 1] == '|')
+                if (double_operator (minishell, &i, 10))
+                    return (1);   
 
-        if (str[i])
-            if (regularstr(str, token, &i, info, env, quote))
+            if (minishell->line[i] == '<' && minishell->line[i + 1] == '<')
+                if (double_operator (minishell, &i, 14))
+                    return (1);   
+
+            if (minishell->line[i] == '>' && minishell->line[i + 1] == '>')
+                if (double_operator (minishell, &i, 15))
+                    return (1);
+        }
+        if (minishell->line[i])
+            if (regularstr(minishell, &i))
                 return (1);
     }
     return (1);
 }
 
 
-t_token **here_doc(t_token *token)
+t_token **here_doc(t_token *token, t_token *start)
 {
-    char    *str;
-    int     size;
-    int     i;
-    t_token **here_doc;
+    int         size;
+    int         i;
+    t_token     **here_doc;
 
-    
     size = 0;
     i = 0;
-    while (token->previous)                 
+
+    printf("str here doc-> %s\n", token->str);
+
+    while (token)                 
     {
         if (token && token->type == 14 && token->next && token->next->type == 1)
             size++;
         token = token->previous;
     }
-
+    printf("size here doc -> %d\n", size);
+    
     here_doc = malloc(sizeof(t_token*) * size + 1);
     if (!here_doc)
         return (0);
     here_doc[size] = '\0';
 
-    while (token && token->next)                 
+    token = start;
+    
+    while (token)                 
     {
         if (token && token->type == 14 && token->next && token->next->type == 1)
         {
@@ -260,36 +304,33 @@ t_token **here_doc(t_token *token)
         }
         token = token->next;
     }
-
     return (here_doc);
 }
 
 t_token *put_here_doc(t_token *token)
 {
     char    *str;
-
     t_token     *result;
     t_db_list   *info;
+
     result = NULL;
     info = init_list(info);
-
     str = readline("> ");
     while (strcmp(str, token->next->str))
     {
         result = push_list(info, result, ft_strjoin(str, "\n"), 1);
         str = readline("> ");
     }
-
     while (result && result->previous)                 
         result = result->previous;
-
     return (result);
 }
 
 void print_here_doc(t_token **token)  //Sert a rien a part veirifier le bon fonctionement du here doc
 {
-    int i = 0;
-
+    int i;
+    
+    i = 0;
     while (token[i])
     {
         while (token[i])

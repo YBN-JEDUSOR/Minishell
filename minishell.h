@@ -6,7 +6,7 @@
 /*   By: rlanani <rlanani@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/14 16:34:47 by rlanani           #+#    #+#             */
-/*   Updated: 2022/05/13 16:59:16 by rlanani          ###   ########.fr       */
+/*   Updated: 2022/05/16 20:14:07 by rlanani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,6 +81,7 @@ typedef struct s_minishell
   t_token     *token;
   t_db_list   *info;
   t_extension *extension;
+  int         quote;
   char        ***env;
   int         grammar;
   int         here_doc;
@@ -89,16 +90,16 @@ typedef struct s_minishell
 
 
 
-int parse_line (char *str, t_token **token, int i, t_db_list **info, char **env, int quote);
-t_token *push_full_list (t_db_list *info, t_token *token, char *str, int type);
-t_token *push_list(t_db_list *info, t_token *token, char *str, int type);
+int       parse_line (t_minishell *minishell, int i);
+t_token   *push_full_list (t_db_list *info, t_token *token, char *str, int type);
+t_token   *push_list(t_db_list *info, t_token *token, char *str, int type);
 t_db_list *init_list(t_db_list *info);
-t_token *push_empty_list (t_db_list *info, t_token *token, char *str, int type);
-char *check_extension(char *str, char **env);
+t_token   *push_empty_list (t_db_list *info, t_token *token, char *str, int type);
+char      *check_extension(char *str, char **env);
 t_extension *set_extension(char *str, t_extension *extension);
-char	*ft_strjoin(char const *s1, char const *s2);
-char	*ft_substr(char const *s, unsigned int start, size_t len);
-size_t	ft_strlen(const char *s);
-t_token **here_doc(t_token *token);
-t_token *put_here_doc(t_token *token);
-void print_here_doc(t_token **token);
+char	    *ft_strjoin(char const *s1, char const *s2);
+char	    *ft_substr(char const *s, unsigned int start, size_t len);
+size_t	  ft_strlen(const char *s);
+t_token   **here_doc(t_token *token, t_token *start);
+t_token   *put_here_doc(t_token *token);
+void      print_here_doc(t_token **token);
