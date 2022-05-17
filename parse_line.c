@@ -100,6 +100,7 @@ int is_infile_or_outfile (t_minishell *minishell, int *i)
     char *result;
     int utils;
 
+    printf("test");
     utils = 7;
     if (minishell->line[(*i)] == '>')
         utils = 8;
@@ -117,7 +118,7 @@ int is_infile_or_outfile (t_minishell *minishell, int *i)
         (*i)++;
     }
     if (!result[0])
-        //printf("bash: syntax error near unexpected token `newline'\n");
+        printf("bash: syntax error near unexpected token `newline'\n");
     minishell->token = push_list(minishell->info, minishell->token, result, utils);         
     while (minishell->line[(*i)] && minishell->line[(*i)] == ' ')
         (*i)++;
@@ -278,7 +279,7 @@ t_token **here_doc(t_token *token, t_token *start)
     size = 0;
     i = 0;
 
-    printf("str here doc-> %s\n", token->str);
+    //printf("str here doc-> %s\n", token->str);
 
     while (token)                 
     {
@@ -286,7 +287,7 @@ t_token **here_doc(t_token *token, t_token *start)
             size++;
         token = token->previous;
     }
-    printf("size here doc -> %d\n", size);
+    //printf("size here doc -> %d\n", size);
     
     here_doc = malloc(sizeof(t_token*) * size + 1);
     if (!here_doc)
