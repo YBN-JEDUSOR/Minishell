@@ -126,7 +126,6 @@ int is_infile_or_outfile (t_minishell *minishell, int *i)
     return (1);
 }
 
-
 int is_wildcard(char *str)
 {
     int i;
@@ -211,7 +210,7 @@ int regularstr(t_minishell *minishell, int *i)
     if (utils == 0)
     {
         //printf("8\n");
-        ////printf("result 8 =%s", result);
+        //printf("result 8 =%s", result);
         minishell->token = push_list(minishell->info, minishell->token, result, is_wildcard(result));    //Token classique 
     }
 
