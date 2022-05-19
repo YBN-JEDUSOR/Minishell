@@ -990,7 +990,7 @@ int main(int argc, char *argv[], char *env[])
 				break; 
 			}*/
 			
-			//printf("token = %s\ntype = %d\n\n", minishell.token->str, minishell.token->type);
+			printf("token = %s\ntype = %d\n\n", minishell.token->str, minishell.token->type);
 
 			add_history(minishell.line);
 			

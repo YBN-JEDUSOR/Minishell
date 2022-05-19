@@ -160,13 +160,11 @@ int regularstr(t_minishell *minishell, int *i)
     {
         if (!not_token(minishell->line[(*i)] && minishell->quote == 0))
         {
-            //printf("3\n");
             break;
         }
 
         if (minishell->line[(*i)] == 34)
         {
-            //printf("4\n");
             if (minishell->quote == 1)
             {
                 minishell->quote = 0;
@@ -181,7 +179,7 @@ int regularstr(t_minishell *minishell, int *i)
         }
         if (minishell->line[(*i)] == 39)
         {
-            //printf("5\n");
+
             if (minishell->quote == 2)
                 minishell->quote = 0;
             if (minishell->quote == 0)
@@ -194,29 +192,40 @@ int regularstr(t_minishell *minishell, int *i)
         {
             if (minishell->line[(*i)] == '=')                                                              //Extension de variable token contenant "=";
                 utils = 1;
-
-            //printf("6\n");
-            result = ft_strjoin(result, ft_substr(minishell->line, (*i), 1));                              //Token classique
-            (*i)++;
+            if (minishell->line[((*i)+1)] == 34)
+            {
+                minishell->quote = 1;
+                result = ft_strjoin(result, ft_substr(minishell->line, (*i), 1));
+                *i = *i + 2;
+                while (minishell->line[(*i)] != 34)
+                {
+                    result = ft_strjoin(result, ft_substr(minishell->line, (*i), 1));
+                    (*i)++;
+                    utils = 3;
+                }
+            }
+            if (utils < 3)
+            {
+                result = ft_strjoin(result, ft_substr(minishell->line, (*i), 1));                              //Token classique
+                (*i)++;
+            }
         }
-    }
-    if (utils == 1)
-    {
-        minishell->token = push_list(minishell->info, minishell->token, result, 13);                      //Extansion de variable token contenant "=";
-        utils = 0;
-        //printf("7\n");
     }
 
     if (utils == 0)
     {
-        //printf("8\n");
-        //printf("result 8 =%s", result);
+
         minishell->token = push_list(minishell->info, minishell->token, result, is_wildcard(result));    //Token classique 
     }
 
+    if (utils > 0)
+    {
+        minishell->token = push_list(minishell->info, minishell->token, result, 13);                      //Extansion de variable token contenant "=";
+        utils = 0;
+
+    }
     while (minishell->line[(*i)] && minishell->line[(*i)] == ' ')
     {
-        //printf("9\n");
         (*i)++;
     }
     parse_line (minishell, (*i));
