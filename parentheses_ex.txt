@@ -1,0 +1,15 @@
+les parenthèses modifient les règles d'associativité et de distributivité
+
+->echo test0 || echo test1 && echo test2
+test0
+test2
+
+->echo test0 || (echo test1 && echo test2)
+test0
+
+->false && echo test0 || echo test1
+test1
+
+->false && (echo test0 || echo test1)
+nothing
+

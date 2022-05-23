@@ -1,0 +1,6 @@
+echo test | >> "outfile maison"
+echo test && echo test && echo test
+si pas de file apres ou avant redirection probleme
+
+export = un seul mot possible pour la variable mais la valeur elle est peu etre entre guilllemets
+$      = guillement possible

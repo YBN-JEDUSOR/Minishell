@@ -6,7 +6,7 @@
 /*   By: rlanani <rlanani@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/14 16:34:47 by rlanani           #+#    #+#             */
-/*   Updated: 2022/05/18 17:11:00 by rlanani          ###   ########.fr       */
+/*   Updated: 2022/05/16 20:14:07 by rlanani          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <errno.h>
-
+#include <dirent.h>
 
 /* LEXIQUE =
     0 == other;
@@ -64,6 +64,9 @@ typedef struct s_pipe_exec
   int   input;
   int   output;
   int   pipe_fd[2];
+  int   here_pipe_fd[2];
+  t_token     **here_doc_tab;
+  int here_doc_tab_index;
   int   first_cmd;
   char  *cmd;
   char  *path;
@@ -72,6 +75,7 @@ typedef struct s_pipe_exec
   char  ***env;
   int   status;
   int   here_doc;
+  int   here_inf;
 } t_pipe_exec;
 
 typedef struct s_minishell
@@ -103,3 +107,7 @@ size_t	  ft_strlen(const char *s);
 t_token   **here_doc(t_token *token, t_token *start);
 t_token   *put_here_doc(t_token *token);
 void      print_here_doc(t_token **token);
+char *ft_34(t_minishell *minishell, int *i);
+char *ft_39(t_minishell *minishell, int *i);
+int not_token(char c);
+char *dollars_sign(t_minishell *minishell, int *i, int quote);
