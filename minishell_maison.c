@@ -370,10 +370,10 @@ int already_in_env(char *str, char **env, int k)
 
     while (env[i])
     {
-        if (!strcmpe(env[i], str, k))
+       /* if (!strcmpe(env[i], str))
         {
             result++;
-        }
+        }*/
         j = 0;
         i++;
     }
@@ -541,7 +541,7 @@ int build_in (t_token *token, char ***env, t_pipe_exec *pipe_exec)
         return (1);
     if (!strcmp(pipe_exec->cmd, "pwd"))
     {
-        print_pwd(10);
+        print_pwd(0);
         return (1);
     }
     if (!strcmp(pipe_exec->cmd, "echo")) 
@@ -1213,84 +1213,43 @@ int handle_execution(t_token **token, t_pipe_exec *pipe_exec, int *pid)
     char line [100];
     int i = 0;
     FILE *ptr = stderr;
-    /*
-    if (handle_cmd_args(token, pipe_exec))
-        return (1);
-    */
-    /*
-    if ((*pipe_exec)->here_doc != -1)
-        (*pipe_exec)->input = (*pipe_exec)->here_doc;
-    */
-    //printf("fichier = %d",(*pipe_exec)->input);
+    *pid = 1;
+    
+    pipe_redirections(pipe_exec->pipe_fd, &pipe_exec->input, &pipe_exec->output, pipe_exec->first_cmd);
 
     
-    //peut etre mettre pipe_fd en variable locale
-    pipe_redirections(pipe_exec->pipe_fd, &pipe_exec->input, &pipe_exec->output, pipe_exec->first_cmd);
-    //printf("pipe_exec->pipe_fd[0]: %d\n", pipe_exec->pipe_fd[0]);
-    
     inf_outf_redirections(*token, pipe_exec);
-    //fprintf(ptr, "pipe_exec->cmds_nbr6673: %d\n", pipe_exec->cmds_nbr);
+
 
     dup2(pipe_exec->input, STDIN_FILENO);
     close(pipe_exec->input);
     dup2(pipe_exec->output, STDOUT_FILENO);
     close(pipe_exec->output);
 
-    //printf("pipe_exec->input: %d\n", pipe_exec->input);
-    //determine_inf_outf(*token, pipe_exec);
-    //printf("pipe_exec->infile: %s\n", pipe_exec->infile);
-    //printf("pipe_exec->outfile: %s\n", pipe_exec->outfile);
-    
-    //dup2(pipe_exec->input, STDIN_FILENO);
-
-    //close(pipe_exec->input);
-
-
-    /*
-    if (pipe_exec->cmds_nbr == 1)
-        output_redirection(pipe_exec->outfile, &pipe_exec->output, pipe_exec->save_output);
-    
-    else
-        pipe_redirections(pipe_exec->pipe_fd, &pipe_exec->input, &pipe_exec->output);
-    dup2(pipe_exec->output, STDOUT_FILENO);
-    close(pipe_exec->output);
-    */
-
-   handle_cmd(token, pipe_exec);
-    
+    handle_cmd(token, pipe_exec);
     handle_args(token, pipe_exec);
+
+    if (!build_in(*token, pipe_exec->env, pipe_exec))
+        *pid = fork();
     
-    *pid = fork();
     
-    
+
     if (!(*pid))
     {
-
-        
-        //if (!build_in(*token, pipe_exec->env, *pipe_exec))
-        //fprintf(fptr,"(*token)->str_before: %s\n", (*token)->str);
-        
-        //if (pipe_exec->cmds_nbr != 1)
-        //    close(pipe_exec->input);
-        
-        //close(pipe_exec->input);
         close(pipe_exec->pipe_fd[0]);
         close(pipe_exec->pipe_fd[1]);
         close(pipe_exec->save_input);
         close(pipe_exec->save_output);
-        if (!build_in(*token, pipe_exec->env, pipe_exec))
-		{
-			handle_execve(token, pipe_exec);
-		}       
+		handle_execve(token, pipe_exec);       
         exit(127);
     }
+
+
     if (pipe_exec->here_inf)
-    {
-        //fprintf(ptr, "ici0: %d\n", pipe_exec->here_doc_tab_index);
-        //fprintf(ptr, "ici0: %s\n", pipe_exec->here_doc_tab_index[pipe_exec->here_doc_tab_index]->str);
         write_here_doc(pipe_exec->here_pipe_fd[1], pipe_exec->here_doc_tab, &pipe_exec->here_doc_tab_index);
-        //fprintf(ptr, "ici1: %d\n", pipe_exec->here_doc_tab_index);
-    }
+
+
+
     if (*pid)
 	{       
 		if (!strcmp(pipe_exec->cmd, "cd"))
@@ -1323,28 +1282,14 @@ int handle_execution(t_token **token, t_pipe_exec *pipe_exec, int *pid)
 	return (1);
 
 }
-/*
-int move_next_cmds(t_token **token, int status)
-{
-    while (*token)
-    {
-        if ((*token)->type == 9)
-        {
-            *token = (*token)->next;
-            return (1);
-        }
-        if ((*token)->type == 10)
-        {
-            *token = (*token)->next;
-            return (2);
-        }
-        if (!(*token)->next)
-            break ;
-        *token = (*token)->next;
-    }
-    return (-1);
-}
-*/
+
+
+
+
+
+
+
+
 
 int find_operator(t_token **token)
 {
@@ -1631,7 +1576,7 @@ int main(int argc, char *argv[], char *env[])
                 break; 
             }*/
             
-            printf("token = %s\ntype = %d\n\n", minishell.token->str, minishell.token->type);
+            //printf("token = %s\ntype = %d\n\n", minishell.token->str, minishell.token->type);
 
             add_history(minishell.line);
             
