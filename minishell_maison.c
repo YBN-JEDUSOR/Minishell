@@ -355,90 +355,86 @@ char *check_extension(char *str, char **env)
     return (result);
 }
 
-int already_in_env(char *str, char **env, int k)
+char *already_in_env(char *str, char **env)
 {
     int i;
     int j;
-    int result;
+    int k;
+    char *result;
 
     i = 0;
     j = 0;
+    k = 0; 
     result = 0;
+    
 
-    printf("1\n");
+
+    while (str && str[k] != '=')
+        k++;
+
+
 
     while (env[i])
     {
-       /* if (!strcmpe(env[i], str))
+        if (!strncmp((const char *)env[i], (const char *)str, k))
         {
-            result++;
-        }*/
+            while (env[i][j] && env[i][j] != '=')
+                j++;
+            if (j == k)
+                return (env[i]);
+        }
         j = 0;
         i++;
     }
-    return (result);
-}
+ 
 
+    return ("\0");
+}
 
 char **export_env(t_token *token, char **env)
 {
     int i;
-    int k;
     int l;
     int j;
     int is_already;
     char **new_env;
+    char *same;
 
-    k = 0;
     i = 0;
     l = 0;
     j = 0;
 
-    while (token->str && token->str[k] != '=')
-        k++;
 
-    is_already = already_in_env(token->str, env, k);
+    same = strdup(already_in_env(token->str, env));
 
     while (env[i])
         i++;
 
-    new_env = malloc(sizeof(char **) * i - is_already + 2);
+    new_env = malloc(sizeof(char **) * i + 1);
     if (!new_env)
         perror("MALLOC EXPORT");
 
+
     i = 0;
-    
+
     while (env[i])
     {
-       
-        if (!strncmp((const char *)env[i], (const char *)token->str, k))
-        {
-           
-            while (env[i][j] && env[i][j] != '=')
-                j++;
-            if (j == k)
-                new_env[i] = strdup(token->str);
-            if (j != k)
-            {
-                new_env[i] = strdup(env[i]);
-            }
-            i++;
-            j = 0;
-        }
-        if (strncmp((const char *)env[i], (const char *)token->str, k))
-        {
+        if (ft_strcmpe(env[i], same))
             new_env[i] = strdup(env[i]);
-            i++;
-        }
+        if (!ft_strcmpe(env[i], same))
+            new_env[i] = strdup(token->str);
+        i++;
     }
 
+    if (same[0] != '\0')
+        new_env[i] = '\0';
 
-    new_env[i] = '\0';
-    if (is_already == 0 )
+    if (same[0] == '\0')
     {
         new_env[i] = strdup(token->str);
         new_env[i + 1] = '\0';
     }
+
     return (new_env);
 }
 
@@ -456,6 +452,7 @@ char **unset_env(t_token *token, char **env)
     
     while (token->str[k])
         k++;
+
     while (env[i])
     {
         if (!strncmp((const char *)env[i], (const char *)token->str, k))
@@ -915,47 +912,8 @@ int    handle_wild_args(char *wildcard, char  **args, int *index)
     prepare_wild_args_arr(args, tmp_arr, args_nbr, *index);
     *index += args_nbr;
 }
-/*
-void    handle_args(t_token **token, t_pipe_exec *pipe_exec)
-{
-    t_token *tmp;
-    int i;
 
-    tmp = *token;
-    pipe_exec->args_nbr = -1;
-    i = -1;  
-    // faire une fonction
-    while (tmp && (tmp->type == 1 || tmp->type == 16))
-    {
-        if (tmp->type == 16)
-            count_wild_args(tmp->str, &pipe_exec->args_nbr);   
-        else
-            pipe_exec->args_nbr++;
-        tmp = tmp->next;
-    }
-    //
-    pipe_exec->args = malloc((pipe_exec->args_nbr + 2) * sizeof(char *));
-    pipe_exec->args[++i] = pipe_exec->cmd;
-    if (*token)
-        (*token) = (*token)->next;
-    i++;
-    while (*token && ((*token)->type == 1 || (*token)->type == 16))
-    {
-        if ((*token)->type == 16)
-            handle_wild_args((*token)->str, pipe_exec->args, &i);
-        else
-        {
-            if (i < pipe_exec->args_nbr + 1)
-            {
-                pipe_exec->args[i] = (*token)->str;
-                i++;
-            } 
-        }        
-        *token = (*token)->next;
-    }
-    pipe_exec->args[i] = NULL; 
-}
-*/
+
 
 void    handle_args(t_token **token, t_pipe_exec *pipe_exec)
 {
@@ -974,7 +932,7 @@ void    handle_args(t_token **token, t_pipe_exec *pipe_exec)
             pipe_exec->args_nbr++;
         tmp = tmp->next;
     }
-    //
+    
     pipe_exec->args = malloc((pipe_exec->args_nbr + 2) * sizeof(char *));
     pipe_exec->args[++i] = pipe_exec->cmd;
     if (*token)
@@ -1020,7 +978,6 @@ int determine_cmd_no_path(t_pipe_exec *pipe_exec)
     pipe_exec->args[0] = pipe_exec->cmd;
     if (pipe_exec->here_inf)
     {
-        //close(pipe_exec->here_pipe_fd[0]);
         close(pipe_exec->here_pipe_fd[1]);
     }
     execve(pipe_exec->args[0], pipe_exec->args, *pipe_exec->env);
@@ -1260,7 +1217,7 @@ int handle_execution(t_token **token, t_pipe_exec *pipe_exec, int *pid)
         close(pipe_exec->pipe_fd[1]);
         close(pipe_exec->save_input);
         close(pipe_exec->save_output);
-		handle_execve(token, pipe_exec);       
+		handle_execve(token, pipe_exec);
         exit(127);
     }
 
