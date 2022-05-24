@@ -175,12 +175,13 @@ int redirection (t_minishell *minishell, int *i, int type)
     if (!result)
         perror("MALLOC RESULT PARSING");
     result[0] = '\0';
+    
     (*i) = (*i) + 2;
     
     while (minishell->line[*i] && minishell->line[*i] == ' ')
         (*i)++;
 
-    while (minishell->line[*i] && not_token(minishell->line[*i]))
+    while (minishell->line[(*i)] && not_token(minishell->line[(*i)]))
     {
         if (minishell->line[*i] == 39)
             result = ft_strjoin(result, ft_34(minishell, i));
@@ -193,6 +194,7 @@ int redirection (t_minishell *minishell, int *i, int type)
     minishell->token = push_list(minishell->info,  minishell->token, result, type);
 
     parse_line (minishell, (*i));
+
     return (1);
 }
 
@@ -213,20 +215,32 @@ int is_infile_or_outfile (t_minishell *minishell, int *i)
     result[0] = '\0';
 
     (*i)++;
-    while (minishell->line[(*i)] && (minishell->line[(*i)] == ' ' || minishell->line[(*i)] == 34 || minishell->line[(*i)] == 39))
-        (*i)++;
-    while (minishell->line[(*i)] && minishell->line[(*i)] != ' ' && minishell->line[(*i)] != ')')
-    {
-        if (minishell->line[(*i)] != 34 && minishell->line[(*i)] != 39)
-            result = ft_strjoin(result, ft_substr(minishell->line, (*i), 1));
-        (*i)++;
-    }
-    if (!result[0])
-        printf("bash: syntax error near unexpected token `newline'\n");
-    minishell->token = push_list(minishell->info, minishell->token, result, utils);         
+    
     while (minishell->line[(*i)] && minishell->line[(*i)] == ' ')
         (*i)++;
+
+    
+    while (minishell->line[(*i)] && not_token(minishell->line[(*i)]))
+    {
+        if (minishell->line[*i] == 39)
+            result = ft_strjoin(result, ft_34(minishell, i));
+        if (minishell->line[*i] == 34)
+            result = ft_strjoin(result, ft_34(minishell, i));
+        result = ft_strjoin(result, ft_substr(minishell->line, (*i), 1));
+        (*i)++;
+    }
+
+    if (!result[0])
+        printf("bash: syntax error near unexpected token `newline'\n");
+
+    
+    minishell->token = push_list(minishell->info, minishell->token, result, utils);
+
+    while (minishell->line[(*i)] && minishell->line[(*i)] == ' ')
+        (*i)++;
+
     parse_line (minishell, (*i));
+
     return (1);
 }
 
@@ -239,17 +253,12 @@ int is_wildcard(char *str)
     {
         if (str[i] == '*')
             return (16);
+        if (str[i] == '=')
+            return (13);
         i++;
     }
     return (1);
 }
-
-
-
-
-
-
-
 
 int regularstr(t_minishell *minishell, int *i)
 {
@@ -275,13 +284,12 @@ int regularstr(t_minishell *minishell, int *i)
         if (!not_token(minishell->line[(*i)]))
             break;
 
-        if (minishell->line[(*i)] == '=')                                                              //Extension de variable token contenant "=";
+        if (minishell->line[(*i)] == '=')                                                                 //Extension de variable token contenant "=";
                 utils = 1;
         
 
         result = ft_strjoin(result, ft_substr(minishell->line, (*i), 1));
         (*i)++;
-
     }
 
     if (utils == 0)
@@ -298,8 +306,6 @@ int regularstr(t_minishell *minishell, int *i)
     parse_line (minishell, (*i));
     return (1);
 }
-
-
 
 
 int parse_line (t_minishell *minishell, int i)
@@ -346,9 +352,6 @@ int parse_line (t_minishell *minishell, int i)
     }
     return (1);
 }
-
-
-
 
 
 t_token **here_doc(t_token *token, t_token *start)

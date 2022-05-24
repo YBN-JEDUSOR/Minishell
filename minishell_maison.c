@@ -1487,10 +1487,6 @@ void	handler(int code)
     }
 }
 
-
-
-
-
 int main(int argc, char *argv[], char *env[])
 {
     t_minishell minishell;
@@ -1532,7 +1528,7 @@ int main(int argc, char *argv[], char *env[])
         if (minishell.token)
         {
             minishell.here_doc_tab = here_doc(minishell.token, minishell.info->first);
-            //print_here_doc(minishell.here_doc_tab);  //simple fonction pour afficher
+            print_here_doc(minishell.here_doc_tab);  //simple fonction pour afficher
         }
         //printf("minishell.here_doc_tab: %p\n", minishell.here_doc_tab);
         if (minishell.grammar > 0 && ft_strlen(minishell.line))
