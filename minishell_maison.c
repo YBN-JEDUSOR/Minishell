@@ -56,7 +56,6 @@ int	ft_strcmpe(char *s1, char *s2)
 	return (s1[i] - s2[i]);
 }
 
-
 int	ft_isalpha(int c)
 {
 	if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
@@ -400,8 +399,6 @@ char **export_env(t_token *token, char **env)
 
     is_already = already_in_env(token->str, env, k);
 
-    printf("is already == %d\n", is_already);
-
     while (env[i])
         i++;
 
@@ -413,10 +410,10 @@ char **export_env(t_token *token, char **env)
     
     while (env[i])
     {
-        printf("3\n");
+       
         if (!strncmp((const char *)env[i], (const char *)token->str, k))
         {
-            printf("5\n");
+           
             while (env[i][j] && env[i][j] != '=')
                 j++;
             if (j == k)
@@ -430,12 +427,10 @@ char **export_env(t_token *token, char **env)
         }
         if (strncmp((const char *)env[i], (const char *)token->str, k))
         {
-            printf("4\n");
             new_env[i] = strdup(env[i]);
             i++;
         }
     }
-    printf("test\n");
 
 
     new_env[i] = '\0';
@@ -554,6 +549,51 @@ int build_in (t_token *token, char ***env, t_pipe_exec *pipe_exec)
         return (1);
     }
     return (0);
+}
+
+
+void sort_env(char **env)
+{
+    int i;
+    int j;
+    int len_env;
+    int rank;
+    char **result;
+
+    i = 0;
+    j = 0;
+    len_env = 0;
+    rank = 0;
+
+    while(env[len_env])
+    {
+        len_env++;
+    }
+
+    result = malloc(sizeof(char **) * len_env + 1);
+    result[len_env] = '\0';
+
+    while (j < len_env)
+    {
+        while (env[i])
+        {
+            if (ft_strcmpe(env[j], env[i]) > 0)
+                rank++;
+            i++;
+        }
+        result[rank] = ft_strjoin("declare -x ", env[j]);
+        rank = 0;
+        i = 0;
+        j++;
+    }
+
+    i = 0;
+
+    while(result[i])
+    {
+        printf("%s\n", result[i]);
+        i++;
+    }
 }
 
 //////////////////////////////////////  BUILD IN //////////////////////////////////////////////////
@@ -925,7 +965,7 @@ void    handle_args(t_token **token, t_pipe_exec *pipe_exec)
     tmp = *token;
     pipe_exec->args_nbr = -1;
     i = -1;  
-    // faire une fonction
+    
     while (tmp && (tmp->type == 1 || tmp->type == 16))
     {
         if (tmp->type == 16)
@@ -1029,27 +1069,8 @@ int determine_cmd_path(t_pipe_exec *pipe_exec)
     perror(pipe_exec->cmd);
     free(pipe_exec->args);
 }
-/*
-int handle_cmd_args(t_token **token, t_pipe_exec *pipe_exec)
-{
-    int found;
-    
-    handle_cmd(token, pipe_exec);
-    handle_args(token, pipe_exec);
-    /*
-    if (check_build_in(pipe_exec))
-        return (0);
 
-    determine_path(pipe_exec->cmd, &pipe_exec->path, *pipe_exec->env);
-    if (!pipe_exec->path)
-        found = determine_cmd_no_path(pipe_exec->cmd, pipe_exec->args, *pipe_exec->env);
-    else
-        found = determine_cmd_path(&pipe_exec->bin, pipe_exec->cmd, pipe_exec->path);
-    if (found)
-        return (1);
-    return (0);
-}
-*/
+
 int    infile_redirection(t_pipe_exec *pipe_exec)
 {  
     if (pipe_exec->infile)
@@ -1202,8 +1223,6 @@ void    write_here_doc(int  here_pipe_fd_out,   t_token **here_doc_tab, int *her
     (*here_doc_tab_index)++;   
     //*here_doc_tab_index = 1;
         
-    
-   
     close(here_pipe_fd_out);
 }
 
@@ -1228,6 +1247,7 @@ int handle_execution(t_token **token, t_pipe_exec *pipe_exec, int *pid)
 
     handle_cmd(token, pipe_exec);
     handle_args(token, pipe_exec);
+    
 
     if (!build_in(*token, pipe_exec->env, pipe_exec))
         *pid = fork();
@@ -1260,7 +1280,10 @@ int handle_execution(t_token **token, t_pipe_exec *pipe_exec, int *pid)
 		}
 		if (!strcmp(pipe_exec->cmd, "export"))
 		{
-			if ((*token)->type == 13)
+            if (!pipe_exec->args[1] && ((!*token) || (*token) && (*token)->type != 13))
+                sort_env(*(pipe_exec)->env);
+
+            if ((*token) && (*token)->type == 13)
 			{
 				if (!ft_isalpha((*token)->str[0])) 
 				{
@@ -1320,56 +1343,7 @@ int handle_continue(t_token **token, int status, int operator)
     return (1);
 }
 
-/*
-int move_next_cmds(t_token **token, int status)
-{
-    int operator;
-    int continue_exec;
 
-    continue_exec = 1;
-    while (continue_exec)
-    {
-        operator = find_operator(token);
-        if (operator == -1)
-            return (-1);
-        continue_exec = handle_continue(token, status, operator);
-        //printf("continue_exec0: %d\n", continue_exec);
-        if (!continue_exec)
-            return (0);
-        
-        //printf("operator: %d\n", operator);
-        //printf("(*token)->str0: %s\n", (*token)->str);
-
-        if ((*token)->type == 11)
-        {
-            //printf("ICI\n");
-            while ((*token)->type != 12)
-            {
-                //printf("(*token)->str1: %s\n", (*token)->str);
-                //printf("(*token)->type: %d\n", (*token)->type);
-                *token = (*token)->next;
-            }
-            //printf("(*token)->str1: %s\n", (*token)->str);
-        }
-        else
-        {
-            while (*token && ((*token)->type != 9 && (*token)->type != 10))
-            {
-                //printf("ICI2\n");
-                if ((*token)->next)
-                    *token = (*token)->next;
-                else
-                    return (-1);
-            }
-            //*token = (*token)->next;    
-            //if ((*token)->str)
-            //    printf("(*token)->str1: %s\n", (*token)->str);
-        }
-        //return (1);
-    }
-    return (0);
-}
-*/
 
 int move_next_cmds(t_token **token, int status)
 {
@@ -1429,7 +1403,7 @@ int    execute_commands(t_token *token, t_pipe_exec *pipe_exec)
     pipe_exec->first_cmd = 1;
     pipe_exec->save_input = dup(STDIN_FILENO);
     pipe_exec->save_output = dup(STDOUT_FILENO);
-    //input_redirection(pipe_exec->infile, &pipe_exec->input, pipe_exec->save_input); A GERER AU NIVEAU DE CHAQUE COMMANDE
+   
     determine_pipe_num(token, pipe_exec);
     
     
@@ -1453,36 +1427,8 @@ int    execute_commands(t_token *token, t_pipe_exec *pipe_exec)
     
     return (0);
 }
-/*
-int    execute_line(t_minishell *minishell)
-{
-    t_pipe_exec pipe_exec;
-    int continue_exec;
 
-    pipe_exec.env = minishell->env;
-    pipe_exec.here_doc_tab = minishell->here_doc_tab;
-    pipe_exec.here_doc_tab_index = 0;
-    continue_exec = 0;
-    while (continue_exec != -1)
-    {
-        //determine_in_out(minishell->token, &pipe_exec); A GERER AU NIVEAU DE CHAQUE COMMANDE
-        //determine_pipe_num(minishell->token, &pipe_exec); A GERER AU NIVEAU DE PIPEX
-        //pipe_exec.env = minishell->env; A GERER AU NIVEAU DE CHAQUE COMMANDE
-        //pipe_exec.here_doc = minishell->here_doc; A GERER AU NIVEAU DE CHAQUE COMMANDE
-        if (!continue_exec)
-            execute_commands(minishell->token, &pipe_exec);
-        else
-        {
-            if (continue_exec == 1 && !pipe_exec.status)
-                execute_commands(minishell->token, &pipe_exec);
-            if (continue_exec == 2 && pipe_exec.status != 0)
-                execute_commands(minishell->token, &pipe_exec);
-        }
-        continue_exec = move_next_cmds(&minishell->token);
-    } 
-    return (0);
-}
-*/
+
 
 int    execute_line(t_minishell *minishell)
 {
@@ -1495,13 +1441,10 @@ int    execute_line(t_minishell *minishell)
     continue_exec = 0;
     while (continue_exec != -1)
     {
-        //determine_in_out(minishell->token, &pipe_exec); A GERER AU NIVEAU DE CHAQUE COMMANDE
-        //determine_pipe_num(minishell->token, &pipe_exec); A GERER AU NIVEAU DE PIPEX
-        //pipe_exec.env = minishell->env; A GERER AU NIVEAU DE CHAQUE COMMANDE
-        //pipe_exec.here_doc = minishell->here_doc; A GERER AU NIVEAU DE CHAQUE COMMANDE
+       
         execute_commands(minishell->token, &pipe_exec);
         continue_exec = move_next_cmds(&minishell->token, pipe_exec.status);
-        //printf("continue_exec1: %d\n", continue_exec);
+
     } 
     return (0);
 }
