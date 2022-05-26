@@ -231,8 +231,10 @@ int is_infile_or_outfile (t_minishell *minishell, int *i)
     }
 
     if (!result[0])
+    {
         printf("bash: syntax error near unexpected token `newline'\n");
-
+        minishell->grammar = -1;
+    }
     
     minishell->token = push_list(minishell->info, minishell->token, result, utils);
 

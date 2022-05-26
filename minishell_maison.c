@@ -29,6 +29,58 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////// UTILS //////////////////////////////////////////////////
 
+static	int			ft_itoa_size(int n)
+{
+	int				size;
+	int				neg;
+
+	size = 0;
+	neg = 0;
+	if (n < 0 && n > -2147483648)
+	{
+		neg = 1;
+		size++;
+		n = -n;
+	}
+	else if (n == 0)
+		return (1);
+	else if (n == -2147483648)
+		return (11);
+	while (n >= 1)
+	{
+		n /= 10;
+		size++;
+	}
+	return (size);
+}
+
+char				*ft_itoa(int n)
+{
+	char			*str;
+	int				i;
+	int				size;
+	int				neg;
+	unsigned int	tmp;
+
+	size = ft_itoa_size(n);
+	neg = (n < 0 ? 1 : 0);
+	i = 1;
+	if (!((str = (char *)malloc(sizeof(char) * ft_itoa_size(n) + 1))))
+		return (NULL);
+	tmp = (n < 0 ? -n : n);
+	if (tmp == 0)
+		str[tmp] = '0';
+	while (tmp >= 1)
+	{
+		str[size - i] = (tmp % 10) + '0';
+		tmp /= 10;
+		i++;
+	}
+	if (neg)
+		*str = '-';
+	str[size] = '\0';
+	return (str);
+}
 
 int	ft_strcmp(const char *s1, const char *s2)
 {
@@ -51,7 +103,7 @@ int	ft_strcmpe(char *s1, char *s2)
 	int i;
 
 	i = 0;
-	while (s1[i] == s2[i] && s1[i] != '\0' && s2[i] != '\0')
+	while (s1[i] == s2[i] && s1[i] && s2[i])
 		i++;
 	return (s1[i] - s2[i]);
 }
@@ -341,6 +393,12 @@ char *check_extension(char *str, char **env)
         perror("MALLOC CHECK_EXTENSION");
     result[0] = '\0';
 
+    /*if (!strncmp("?", str, 1))
+        return (ft_itoa(pipe));*/
+
+
+
+
     while (env[i])
     {
         if(!strncmp((const char *)env[i], (const char *)str, ft_strlen(str)))
@@ -352,6 +410,7 @@ char *check_extension(char *str, char **env)
         }
         i++;
     }
+
     return (result);
 }
 
@@ -369,9 +428,8 @@ char *already_in_env(char *str, char **env)
     
 
 
-    while (str && str[k] != '=')
+    while (str[k] && str[k] != '=')
         k++;
-
 
 
     while (env[i])
@@ -391,7 +449,7 @@ char *already_in_env(char *str, char **env)
     return ("\0");
 }
 
-char **export_env(t_token *token, char **env)
+char **export_env(char *str, char **env)
 {
     int i;
     int l;
@@ -405,7 +463,7 @@ char **export_env(t_token *token, char **env)
     j = 0;
 
 
-    same = strdup(already_in_env(token->str, env));
+    same = strdup(already_in_env(str, env));
 
     while (env[i])
         i++;
@@ -422,7 +480,7 @@ char **export_env(t_token *token, char **env)
         if (ft_strcmpe(env[i], same))
             new_env[i] = strdup(env[i]);
         if (!ft_strcmpe(env[i], same))
-            new_env[i] = strdup(token->str);
+            new_env[i] = strdup(str);
         i++;
     }
 
@@ -431,54 +489,53 @@ char **export_env(t_token *token, char **env)
 
     if (same[0] == '\0')
     {
-        new_env[i] = strdup(token->str);
+        new_env[i] = strdup(str);
         new_env[i + 1] = '\0';
     }
 
     return (new_env);
 }
 
-char **unset_env(t_token *token, char **env)
+char **unset_env(char *str, char **env)
 {
     int i;
-    int k;
     int l;
+    int j;
+    int is_already;
     char **new_env;
+    char *same;
 
-    k = 0;
     i = 0;
     l = 0;
+    j = 0;
 
-    
-    while (token->str[k])
-        k++;
+
+    same = already_in_env(str, env);
+
+
+    while (env[i])
+        i++;
+
+    new_env = malloc(sizeof(char **) * i + 1);
+    if (!new_env)
+        perror("MALLOC EXPORT");
+
+    i = 0;
 
     while (env[i])
     {
-        if (!strncmp((const char *)env[i], (const char *)token->str, k))
-            l = 1;
+        if (ft_strcmpe(env[i], same))
+            new_env[l] = strdup(env[i]);
+        if (!ft_strcmpe(env[i], same))
+            l--;
+        l++;
         i++;
     }
-    if (l == 1)
-    {
-        l = 0;
-        new_env = malloc(sizeof(char **) * i + 1);
-        if (!new_env)
-            perror("MALLOC EXPORT");
-        i = 0;
-        while (env[i])
-        {
-            if (strncmp((const char *)env[i], (const char *)token->str, k))
-            {
-                new_env[l] = strdup(env[i]);
-                l++;
-            }
-            i++;
-        }
-        new_env[l] = 0x00;
-        return (new_env);
-    }
-    return (env);
+
+    
+    new_env[i] = '\0';
+
+    return (new_env);
 }
 
 int print_pwd(int size)
@@ -495,21 +552,28 @@ int print_pwd(int size)
     return (1);
 }
 
-void echo(char **str)
+int echo(char **str)
 {
     int i;
 
     i = 1;
 
-    if (!strcmp(str[1], "-n"))
-        i++;
+    printf("1\n");
+
+    /*if (str && !ft_strcmpe(str[1], "-n"))
+        i++;*/
+
+    printf("2\n");
     while (str[i])
     {
         printf("%s ", str[i]);
         i++;
     }
+
     if (strcmp(str[1], "-n"))
         printf("\n");
+
+    return(1);
 
 }
 
@@ -522,29 +586,17 @@ int build_in (t_token *token, char ***env, t_pipe_exec *pipe_exec)
         return (1);
 
     if (!strcmp(pipe_exec->cmd, "env"))                                             
-    {
-        while (env[0][i])
-            printf("%s\n", env[0][i++]);
         return (1);
-    }
     if (!strcmp(pipe_exec->cmd, "export"))
         return (1); 
     if (!strcmp(pipe_exec->cmd, "unset"))
         return (1);
     if (!strcmp(pipe_exec->cmd, "pwd"))
-    {
-        print_pwd(0);
         return (1);
-    }
     if (!strcmp(pipe_exec->cmd, "echo")) 
-    {
-        echo(pipe_exec->args);
         return (1);
-    }
     if (!strcmp(pipe_exec->cmd, "cd"))    
-    {
         return (1);
-    }
     return (0);
 }
 
@@ -932,14 +984,19 @@ void    handle_args(t_token **token, t_pipe_exec *pipe_exec)
             pipe_exec->args_nbr++;
         tmp = tmp->next;
     }
+
+
     
     pipe_exec->args = malloc((pipe_exec->args_nbr + 2) * sizeof(char *));
     pipe_exec->args[++i] = pipe_exec->cmd;
     if (*token)
         (*token) = (*token)->next;
     i++;
+    
+
     while (*token && ((*token)->type == 1 || (*token)->type == 16))
     {
+
         if ((*token)->type == 16)
             handle_wild_args((*token)->str, pipe_exec->args, &i);
         else
@@ -947,6 +1004,7 @@ void    handle_args(t_token **token, t_pipe_exec *pipe_exec)
                 pipe_exec->args[i++] = (*token)->str;       
         *token = (*token)->next;
     }
+
     pipe_exec->args[i] = NULL; 
 }
 
@@ -1183,6 +1241,31 @@ void    write_here_doc(int  here_pipe_fd_out,   t_token **here_doc_tab, int *her
     close(here_pipe_fd_out);
 }
 
+int export(t_token **token, t_pipe_exec *pipe_exec)
+{
+    
+    if (!pipe_exec->args[1] && ((!*token) || (*token) && (*token)->type != 13))
+                sort_env(*(pipe_exec)->env);
+
+    if ((*token) && (*token)->type == 13)
+	{
+		if (!ft_isalpha((*token)->str[0])) 
+		{
+				printf("export: `%s': not a valid identifier\n", (*token)->str);
+				return (1);
+		}
+
+        while ((*token) && (*token)->type == 13)
+        {
+            *(pipe_exec)->env = export_env((*token)->str, *(pipe_exec)->env);
+            *token = (*token)->next;
+        }
+		return (1);
+	}
+}
+
+
+
 int handle_execution(t_token **token, t_pipe_exec *pipe_exec, int *pid)
 {
     char *str;
@@ -1233,34 +1316,72 @@ int handle_execution(t_token **token, t_pipe_exec *pipe_exec, int *pid)
 		{
 			if(chdir((const char *)pipe_exec->args[1]) == -1)
 				fprintf(stderr, "%d\n", errno);
-			return (1);
+            
+            pipe_exec->status = 0;
+			
+            return (1);
 		}
+
 		if (!strcmp(pipe_exec->cmd, "export"))
 		{
-            if (!pipe_exec->args[1] && ((!*token) || (*token) && (*token)->type != 13))
-                sort_env(*(pipe_exec)->env);
-
-            if ((*token) && (*token)->type == 13)
-			{
-				if (!ft_isalpha((*token)->str[0])) 
-				{
-					printf("export: `%s': not a valid identifier", (*token)->str);
-					return (1);
-				}	
-				*(pipe_exec)->env = export_env(*token, *(pipe_exec)->env);
-				return (1);
-			}
+            export(token, pipe_exec);
+            
+            pipe_exec->status = 0;
+            
+            return (1);
 		}
+
 		if (!strcmp(pipe_exec->cmd, "unset"))
 		{
-			if ((*token)->type == 2)
-				*(pipe_exec)->env = unset_env(*token, *(pipe_exec)->env);
+            int p = 1;
+            if (!(pipe_exec)->args[1])
+                printf("unset: not enough arguments\n");
+            while ((pipe_exec)->args[p])
+            {
+                *(pipe_exec)->env = unset_env((pipe_exec)->args[p],  *(pipe_exec)->env);
+                p++;
+            }
+
+            pipe_exec->status = 0;
+
+            return (1);
 		}
-		if (!strcmp(pipe_exec->cmd, "exit"))                
-			exit(0); 
+
+        if (!strcmp(pipe_exec->cmd, "env"))                                             
+        {
+            while (pipe_exec->env[0][i])
+                printf("%s\n", pipe_exec->env[0][i++]);
+
+            pipe_exec->status = 0;
+
+            return (1);
+        }
+
+        if (!strcmp(pipe_exec->cmd, "pwd"))
+        {
+            print_pwd(0);
+
+            pipe_exec->status = 0;
+
+            return (1);
+        }
+
+        if (!strcmp(pipe_exec->cmd, "echo")) 
+        {
+            
+            echo(pipe_exec->args);
+
+            pipe_exec->status = 0;
+
+            return (1);
+        }
+		
+        if (!strcmp(pipe_exec->cmd, "exit"))
+        {              
+			exit(0);
+        } 
 	}
 	return (1);
-
 }
 
 
@@ -1465,12 +1586,11 @@ int main(int argc, char *argv[], char *env[])
 
         while (minishell.token)
         {
-            /*if (!(ft_grammar(&minishell.token)))
+            if (!(ft_grammar(&minishell.token)))
             {
-                printf("token = %s\ntype = %d\n\n", minishell.token->str, minishell.token->type);
                 minishell.grammar = -1;
                 break; 
-            }*/
+            }
             
             //printf("token = %s\ntype = %d\n\n", minishell.token->str, minishell.token->type);
 
@@ -1487,7 +1607,9 @@ int main(int argc, char *argv[], char *env[])
             minishell.here_doc_tab = here_doc(minishell.token, minishell.info->first);
             print_here_doc(minishell.here_doc_tab);  //simple fonction pour afficher
         }
+
         //printf("minishell.here_doc_tab: %p\n", minishell.here_doc_tab);
+       
         if (minishell.grammar > 0 && ft_strlen(minishell.line))
         {
             while (minishell.token && minishell.token->previous)                 
@@ -1497,11 +1619,6 @@ int main(int argc, char *argv[], char *env[])
                 if (execute_line(&minishell))
                     return (1);
         }
-
-        
-
-        
-        
 
         ////////////////////////////////////// Reboot de la line et liberation des structures////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1519,6 +1636,7 @@ int main(int argc, char *argv[], char *env[])
         prepaSignal.sa_handler=&handler;
         minishell.line = readline("minishell$ ");
         prepaSignal.sa_handler=SIG_IGN;
+        minishell.grammar = 1;
     
 
 

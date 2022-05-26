@@ -66,7 +66,7 @@ typedef struct s_pipe_exec
   int   pipe_fd[2];
   int   here_pipe_fd[2];
   t_token     **here_doc_tab;
-  int here_doc_tab_index;
+  int   here_doc_tab_index;
   int   first_cmd;
   char  *cmd;
   char  *path;
